@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "kMvdgJEYiwKodYE7WmQ8AYcFlZLBm4OjsZQqSMpGhRw=",
+  "Source": "sofmar_backend-dotnet",
+  "BasePath": "_content/sofmar_backend-dotnet",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
