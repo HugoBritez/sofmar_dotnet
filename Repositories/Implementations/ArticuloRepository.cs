@@ -1,0 +1,513 @@
+using Api.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Api.Models.Dtos.Articulo;
+using Dapper;
+using MySql.Data.MySqlClient;
+
+
+namespace Api.Repositories.Implementations
+{
+    public class ArticuloRepository : IArticuloRepository
+    {
+        public required string _connectionString { get; init; }
+
+        public ArticuloRepository(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ??
+                throw new ArgumentNullException(nameof(configuration), "Connection string 'DefaultConnection' not found.");
+        }
+
+        public async Task<IEnumerable<ArticuloBusquedaDTO>> BuscarArticulos(
+            uint? articuloId = null,
+            string? busqueda = null,
+            string? codigoBarra = null,
+            uint moneda = 1,
+            bool? stock = null,
+            uint? deposito = null,
+            uint? marca = null,
+            uint? categoria = null,
+            uint? ubicacion = null,
+            uint? proveedor = null,
+            string? codInterno = null,
+            string? lote = null,
+            bool? negativo = null)
+        {
+            Console.WriteLine(
+                "estos son los parametros: " +
+                $"articuloId: {articuloId}, " +
+                $"busqueda: {busqueda}, " +
+                $"codigoBarra: {codigoBarra}, " +
+                $"moneda: {moneda}, " +
+                $"stock: {stock}, " +
+                $"deposito: {deposito}, " +
+                $"marca: {marca}, " +
+                $"categoria: {categoria}, " +
+                $"ubicacion: {ubicacion}, " +
+                $"proveedor: {proveedor}, " +
+                $"codInterno: {codInterno}, " +
+                $"lote: {lote}, " +
+                $"negativo: {negativo}"
+            );
+            var where = "";
+            var parameters = new DynamicParameters();
+
+            if (articuloId.HasValue)
+            {
+                where += " AND ar.ar_codigo = @ArticuloId";
+                parameters.Add("@ArticuloId", articuloId.Value);
+            }
+            else if (!string.IsNullOrEmpty(codigoBarra))
+            {
+                where += " AND ar.ar_codbarra = @CodigoBarra";
+                parameters.Add("@CodigoBarra", codigoBarra);
+            }
+            else if (!string.IsNullOrEmpty(busqueda))
+            {
+                var palabras = busqueda.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (marca.HasValue || categoria.HasValue || ubicacion.HasValue ||
+                    proveedor.HasValue || !string.IsNullOrEmpty(codInterno) || !string.IsNullOrEmpty(lote))
+                {
+                    var condicionesFiltros = new List<string>();
+
+                    if (marca.HasValue)
+                    {
+                        condicionesFiltros.Add("ma.ma_descripcion LIKE @Busqueda");
+                        parameters.Add("@Busqueda", $"%{busqueda}%");
+                    }
+                    if (categoria.HasValue)
+                    {
+                        condicionesFiltros.Add("ca.ca_descripcion LIKE @Busqueda");
+                    }
+                    if (ubicacion.HasValue)
+                    {
+                        condicionesFiltros.Add("ub.ub_descripcion LIKE @Busqueda");
+                    }
+                    if (!string.IsNullOrEmpty(codInterno))
+                    {
+                        condicionesFiltros.Add("ar.ar_cod_interno LIKE @Busqueda");
+                    }
+                    if (!string.IsNullOrEmpty(lote))
+                    {
+                        condicionesFiltros.Add("al.al_lote LIKE @Busqueda");
+                    }
+                    where += $" AND ({string.Join(" OR ", condicionesFiltros)})";
+                }
+                else
+                {
+                    Console.WriteLine("entra a este else de busqueda por palabras");
+                    var condiciones = palabras.Select((p, i) =>
+                    {
+                        parameters.Add($"@Palabra{i}", $"%{p}%");
+                        parameters.Add($"@Palabra{i}Exacta", p);
+                        Console.WriteLine($"Palabra{i}: {p}");
+                        return $"(ar.ar_descripcion LIKE @Palabra{i} OR ar.ar_codbarra = @Palabra{i}Exacta OR al.al_lote = @Palabra{i}Exacta)";
+                    });
+                    where += $" AND ({string.Join(" AND ", condiciones)})";
+                }
+            }
+
+            if (deposito.HasValue)
+            {
+                where += " AND al.al_deposito = @Deposito";
+                parameters.Add("@Deposito", deposito.Value);
+            }
+
+            if (negativo == true)
+            {
+                where += " AND (al.al_cantidad < 0)";
+            }
+            else if (stock == true)
+            {
+                where += " AND (al.al_cantidad > 0)";
+            }
+
+            var query = @"
+                SELECT
+                    al.al_codigo as IdLote,
+                    al.al_lote as Lote,
+                    ar.ar_codigo as IdArticulo,
+                    ar.ar_codbarra as CodigoBarra,
+                    ar.ar_descripcion as Descripcion,
+                    ar.ar_stockneg as StockNegativo,
+                    ar.ar_pcg as PrecioCosto,
+                    ar.ar_pvg as PrecioVentaGuaranies,
+                    ar.ar_pvcredito as PrecioCredito,
+                    ar.ar_pvmostrador as PrecioMostrador,
+                    ar.ar_precio_4 as Precio4,
+                    ar.ar_pcd as PrecioCostoDolar,
+                    ar.ar_pvd as PrecioVentaDolar,
+                    ar.ar_pcp as PrecioCostoPesos,
+                    ar.ar_pvp as PrecioVentaPesos,
+                    ar.ar_pcr as PrecioCostoReal,
+                    ar.ar_pvr as PrecioVentaReal,
+                    DATE_FORMAT(al.al_vencimiento, '%d/%m/%Y') as VencimientoLote,
+                    al.al_cantidad as CantidadLote,
+                    al.al_deposito as Deposito,
+                    ub.ub_descripcion as Ubicacion,
+                    s.s_descripcion as SubUbicacion,
+                    ma.ma_descripcion as Marca,
+                    sc.sc_descripcion as Subcategoria,
+                    ca.ca_descripcion as Categoria,
+                    ar.ar_iva as Iva,
+                    ar.ar_vencimiento as VencimientoValidacion,
+                    iva.iva_descripcion as IvaDescripcion,
+                    ar.ar_editar_desc as EditarNombre,
+                    CASE
+                        WHEN MIN(DATEDIFF(al.al_vencimiento, CURDATE())) < 0 THEN 'VENCIDO'
+                        WHEN MIN(DATEDIFF(al.al_vencimiento, CURDATE())) <= 120 THEN 'PROXIMO'
+                        ELSE 'VIGENTE'
+                    END as EstadoVencimiento,
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT p.pro_razon SEPARATOR ', ')
+                        FROM articulos_proveedores ap 
+                        INNER JOIN proveedores p ON ap.arprove_prove = p.pro_codigo
+                        WHERE ap.arprove_articulo = ar.ar_codigo
+                    ) as Proveedor,
+                    (
+                        SELECT DATE_FORMAT(ve.ve_fecha, '%d/%m/%Y')
+                        FROM ventas ve
+                        INNER JOIN detalle_ventas dv ON ve.ve_codigo = dv.deve_venta
+                        WHERE dv.deve_articulo = ar.ar_codigo
+                        ORDER BY ve.ve_fecha DESC
+                        LIMIT 1
+                    ) as FechaUltimaVenta,
+                    al.al_pre_compra as PreCompra
+                FROM articulos_lotes al
+                INNER JOIN articulos ar ON al.al_articulo = ar.ar_codigo
+                INNER JOIN depositos de ON al.al_deposito = de.dep_codigo
+                INNER JOIN ubicaciones ub ON ar.ar_ubicacicion = ub.ub_codigo
+                INNER JOIN sub_ubicacion s ON ar.ar_sububicacion = s.s_codigo
+                INNER JOIN marcas ma ON ar.ar_marca = ma.ma_codigo
+                INNER JOIN subcategorias sc ON ar.ar_subcategoria = sc.sc_codigo
+                INNER JOIN categorias ca ON sc.sc_categoria = ca.ca_codigo
+                INNER JOIN iva ON ar.ar_iva = iva.iva_codigo
+                WHERE ar.ar_estado = 1
+                " + where + @"
+                GROUP BY al.al_codigo
+                ORDER BY ar.ar_descripcion
+                LIMIT 25";
+
+
+            using var connection = new MySqlConnection(_connectionString);
+            Console.WriteLine(query);
+            return await connection.QueryAsync<ArticuloBusquedaDTO>(query, parameters);
+        }
+
+
+        public async Task<ArticuloConsultaResponse> ConsultarArticulos(
+            string? busqueda = null,
+            string? deposito = null,
+            string? stock = null,
+            string? marca = null,
+            string? categoria = null,
+            string? subcategoria = null,
+            string? proveedor = null,
+            string? ubicacion = null,
+            bool? servicio = null,
+            uint? moneda = null,
+            string? unidadMedida = null,
+            int pagina = 1,
+            int limite = 50,
+            string? tipoValorizacionCosto = null)
+        {
+            try
+            {
+                pagina = Math.Max(1, pagina);
+                limite = Math.Max(1, limite);
+                var offset = (pagina - 1) * limite;
+
+                var where = "WHERE 1=1";
+                var parameters = new DynamicParameters();
+
+                if (!string.IsNullOrEmpty(busqueda))
+                {
+                    var palabras = busqueda.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var condiciones = palabras.Select((palabra, index) =>
+                    {
+                        parameters.Add($"@Busqueda{index}", $"%{palabra}%");
+                        return $"(ar.ar_descripcion LIKE @Busqueda{index} OR ar.ar_cod_interno LIKE @Busqueda{index} OR al.al_lote LIKE @Busqueda{index} OR ar.ar_codbarra LIKE @Busqueda{index})";
+                    });
+                    where += $" AND ({string.Join(" AND ", condiciones)})";
+                }
+
+                if (!string.IsNullOrEmpty(deposito))
+                {
+                    where += " AND al.al_deposito IN @Deposito";
+                    parameters.Add("@Deposito", deposito.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (!string.IsNullOrEmpty(marca))
+                {
+                    where += " AND ar.ar_marca IN @Marca";
+                    parameters.Add("@Marca", marca.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (!string.IsNullOrEmpty(categoria))
+                {
+                    where += " AND ar.ar_subcategoria IN @Categoria";
+                    parameters.Add("@Categoria", categoria.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (!string.IsNullOrEmpty(subcategoria))
+                {
+                    where += " AND ar.ar_subcategoria IN @Subcategoria";
+                    parameters.Add("@Subcategoria", subcategoria.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (!string.IsNullOrEmpty(proveedor))
+                {
+                    where += " AND ar.ar_proveedor IN @Proveedor";
+                    parameters.Add("@Proveedor", proveedor.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (!string.IsNullOrEmpty(ubicacion))
+                {
+                    where += " AND ar.ar_ubicacicion IN @Ubicacion";
+                    parameters.Add("@Ubicacion", ubicacion.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (servicio == true)
+                {
+                    where += " AND ar.ar_servicio = 1";
+                }
+
+                if (moneda.HasValue)
+                {
+                    where += " AND ar.ar_moneda = @Moneda";
+                    parameters.Add("@Moneda", moneda.Value);
+                }
+
+                if (!string.IsNullOrEmpty(unidadMedida))
+                {
+                    where += " AND ar.ar_unidadmedida IN @UnidadMedida";
+                    parameters.Add("@UnidadMedida", unidadMedida.Split(',').Select(uint.Parse).ToArray());
+                }
+
+                if (stock == "-1")
+                {
+                    where += " AND al.al_cantidad < 0";
+                }
+                else if (stock == "0")
+                {
+                    where += " AND al.al_cantidad = 0";
+                }
+                else if (stock == "1")
+                {
+                    where += " AND al.al_cantidad > 0";
+                }
+
+                var ultimocostocompra = tipoValorizacionCosto == "2"
+                    ? @"COALESCE(
+                (SELECT FORMAT((dc.dc_precio + dc.dc_recargo), 0, 'de_DE')
+                 FROM detalle_compras dc 
+                 INNER JOIN compras c ON dc.dc_compra = c.co_codigo 
+                 WHERE c.co_estado = 1
+                 AND dc.dc_articulo = ar.ar_codigo
+                 AND c.co_moneda = ar.ar_moneda
+                 ORDER BY dc.dc_id DESC 
+                 LIMIT 1),
+                CASE 
+                  WHEN ar.ar_moneda = 1 THEN FORMAT(ar.ar_pcg, 0, 'de_DE')
+                  WHEN ar.ar_moneda = 2 THEN FORMAT(ar.ar_pcd, 0, 'de_DE')
+                  WHEN ar.ar_moneda = 3 THEN FORMAT(ar.ar_pcr, 0, 'de_DE')
+                  WHEN ar.ar_moneda = 4 THEN FORMAT(ar.ar_pcp, 0, 'de_DE')
+                  ELSE FORMAT(ar.ar_pcg, 0, 'de_DE')
+                END
+              )"
+                    : $@"CASE 
+                WHEN {moneda ?? 1} = 1 THEN FORMAT(ar.ar_pcg, 0, 'de_DE')
+                WHEN {moneda ?? 1} = 2 THEN FORMAT(ar.ar_pcd, 2, 'de_DE')
+                WHEN {moneda ?? 1} = 3 THEN FORMAT(ar.ar_pcr, 2, 'de_DE')
+                WHEN {moneda ?? 1} = 4 THEN FORMAT(ar.ar_pcp, 2, 'de_DE')
+                ELSE NULL
+              END";
+
+                var baseQuery = @"
+            FROM articulos_lotes al
+            INNER JOIN articulos ar ON al.al_articulo = ar.ar_codigo
+            INNER JOIN depositos dep ON al.al_deposito = dep.dep_codigo
+            INNER JOIN ubicaciones ub ON ar.ar_ubicacicion = ub.ub_codigo
+            INNER JOIN subcategorias sc ON ar.ar_subcategoria = sc.sc_codigo
+            INNER JOIN categorias cat ON sc.sc_categoria = cat.ca_codigo
+            INNER JOIN marcas ma ON ar.ar_marca = ma.ma_codigo
+            INNER JOIN unidadmedidas um ON ar.ar_unidadmedida = um.um_codigo
+            LEFT JOIN articulos_proveedores ap ON ar.ar_codigo = ap.arprove_articulo
+            LEFT JOIN proveedores pro ON ap.arprove_codigo = pro.pro_codigo";
+
+                var countQuery = $@"
+            SELECT COUNT(DISTINCT al.al_codigo) as total
+            {baseQuery}
+            {where}";
+
+                var query = $@"
+            SELECT DISTINCT
+                ar.ar_codigo as codigo_articulo,
+                (CASE WHEN al.al_codbarra IS NOT NULL AND al.al_codbarra != '' THEN al.al_codbarra ELSE ar.ar_codbarra END) as codigo_barra,
+                ar.ar_descripcion as descripcion_articulo,
+                {ultimocostocompra} as precio_compra,
+                CASE 
+                    WHEN {moneda ?? 1} = 1 THEN FORMAT(ar.ar_pvg, 0, 'de_DE')
+                    WHEN {moneda ?? 1} = 2 THEN FORMAT(ar.ar_pvd, 2, 'de_DE')
+                    WHEN {moneda ?? 1} = 3 THEN FORMAT(ar.ar_pvr, 2, 'de_DE')
+                    WHEN {moneda ?? 1} = 4 THEN FORMAT(ar.ar_pvp, 2, 'de_DE')
+                    ELSE NULL
+                END as precio_venta,
+                FORMAT(ar.ar_pvcredito, 0, 'de_DE') as precio_venta_credito,
+                FORMAT(ar.ar_pvmostrador, 0, 'de_DE') as precio_venta_mostrador,
+                FORMAT(ar.ar_precio_4, 0, 'de_DE') as precio_venta_4,
+                pro.pro_razon as proveedor,
+                dep.dep_descripcion as Deposito,
+                ub.ub_descripcion as ubicacion,
+                cat.ca_descripcion as categoria,
+                sc.sc_descripcion as subcategoria,
+                ma.ma_descripcion as marca,
+                um.um_descripcion as unidad_medida,
+                FORMAT(al.al_cantidad, 0, 'de_DE') as stock_actual,
+                FORMAT(ar.ar_stkmin, 0, 'de_DE') as stock_minimo,
+                al.al_codigo as lote,
+                DATE_FORMAT(al.al_vencimiento, '%Y-%m-%d') as vencimiento,
+                CASE 
+                    WHEN {moneda ?? 1} = 1 THEN 'Gs'
+                    WHEN {moneda ?? 1} = 2 THEN 'USD'
+                    WHEN {moneda ?? 1} = 3 THEN 'BRL'
+                    WHEN {moneda ?? 1} = 4 THEN 'ARS'
+                    ELSE 'Gs'
+                END as moneda
+            {baseQuery}
+            {where}
+            ORDER BY ar.ar_descripcion
+            LIMIT {limite} OFFSET {offset}";
+
+                using var connection = new MySqlConnection(_connectionString);
+                var resultados = await connection.QueryAsync<ConsultaArticulosDto>(query, parameters);
+                var totalRegistros = await connection.QueryFirstOrDefaultAsync<dynamic>(countQuery, parameters);
+
+                return new ArticuloConsultaResponse
+                {
+                    Datos = resultados,
+                    Paginacion = new PaginacionDTO
+                    {
+                        Pagina = pagina,
+                        Limite = limite,
+                        Total = (int)(totalRegistros?.total ?? 0),
+                        Paginas = (int)Math.Ceiling((totalRegistros?.total ?? 0) / (double)limite)
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error en BuscarArticulosNuevo: {ex}");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<ArticuloCategoriaResponse>> ArticulosPorCategoria()
+        {
+            var query = @"
+              SELECT
+        ca.ca_codigo as id,
+        ca.ca_descripcion as nombre,
+        (
+          SELECT COUNT(*)
+          FROM articulos ar
+          INNER JOIN subcategorias sc2 ON ar.ar_subcategoria = sc2.sc_codigo
+          WHERE sc2.sc_categoria = ca.ca_codigo
+          AND ar.ar_estado = 1
+        ) as cantidad_articulos
+      FROM categorias ca
+      WHERE ca.ca_estado = 1
+      ORDER BY ca.ca_descripcion
+            ";
+
+            using var connection = new MySqlConnection(_connectionString);
+            return await connection.QueryAsync<ArticuloCategoriaResponse>(query);
+        }
+
+        public async Task<IEnumerable<ArticuloMarcaResponse>> ArticulosPorMarca()
+        {
+            var query = @"
+              SELECT
+                ma.ma_codigo as id,
+                ma.ma_descripcion as nombre,
+                (
+                  SELECT COUNT(*)
+                  FROM articulos ar
+                  WHERE ar.ar_marca = ma.ma_codigo
+                  AND ar.ar_estado = 1
+                ) as cantidad_articulos
+              FROM marcas ma
+              WHERE ma.ma_estado = 1
+              ORDER BY ma.ma_descripcion
+            ";
+
+            using var connection = new MySqlConnection(_connectionString);
+            return await connection.QueryAsync<ArticuloMarcaResponse>(query);
+        }
+
+         public async Task<IEnumerable<ArticuloSeccionResponse>> ArticulosPorSeccion()
+        {
+            var query = @"
+              SELECT
+                s.s_codigo as id,
+                s.s_descripcion as nombre,
+                (
+                  SELECT COUNT(*)
+                  FROM articulos ar
+                  WHERE ar.ar_seccion = s.s_codigo
+                  AND ar.ar_estado = 1
+                ) as cantidad_articulos
+              FROM secciones s
+              WHERE s.s_estado = 1
+              ORDER BY s.s_descripcion
+            ";
+
+            using var connection = new MySqlConnection(_connectionString);
+            return await connection.QueryAsync<ArticuloSeccionResponse>(query);
+        }
+
+
+        public async Task<IEnumerable<ArticuloEnPedidoResponse>> ArticulosEnPedido(int articulo_id, int id_lote)
+        {
+            var query = 
+            @"
+            (SELECT
+                dp.dp_codigo as IdDetallePedido,
+                DATE_FORMAT(p.p_fecha, '%d/%m/%Y') as Fecha,
+                cli.cli_razon as Cliente,
+                dp.dp_cantidad as Cantidad,
+                0 as Tipo
+            FROM detalle_pedido dp
+            INNER JOIN pedidos p ON dp.dp_pedido = p.p_codigo
+            INNER JOIN clientes cli ON p.p_cliente = cli.cli_codigo
+            WHERE dp.dp_articulo = @ArticuloId
+            AND dp.dp_codigolote = @IdLote
+            AND p.p_estado = 1
+            AND dp.dp_habilitar = 1)
+            
+            UNION ALL
+            
+            (SELECT
+                ri.id as IdDetallePedido,
+                DATE_FORMAT(r.fecha, '%d/%m/%Y') as Fecha,
+                cli.cli_razon as Cliente,
+                ri.cantidad as Cantidad,
+                1 as Tipo
+            FROM remisiones_items ri
+            INNER JOIN remisiones r ON ri.remision = r.id
+            INNER JOIN clientes cli ON r.cliente = cli.cli_codigo
+            WHERE ri.articulo = @ArticuloId
+            AND ri.codlote = @IdLote
+            AND r.estado = 1
+            AND r.tipo_estados = 0
+            ORDER BY r.id DESC)";
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@ArticuloId", articulo_id);
+        parameters.Add("@IdLote", id_lote);
+
+        using var connection = new MySqlConnection(_connectionString);
+        return await connection.QueryAsync<ArticuloEnPedidoResponse>(query, parameters);
+        }
+    }
+}

@@ -6,6 +6,9 @@ using NSwag.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Api.Repositories.Interfaces;
+using Api.Repositories.Implementations;
+
 // Cargar el archivo .env al inicio del programa
 Env.Load();
 
@@ -38,6 +41,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Registrar servicios
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IArticuloRepository, ArticuloRepository>();
+builder.Services.AddScoped<IDepositosRepository, DepositoRepository>();
+builder.Services.AddScoped<ISucursalRepository, SucursalRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
@@ -46,8 +52,8 @@ builder.Services.AddSwaggerDocument(config =>
     config.PostProcess = document =>
     {
         document.Info.Version = "v1";
-        document.Info.Title = "API de Autenticación";
-        document.Info.Description = "API para autenticación de usuarios";
+        document.Info.Title = "API de Sofmar";
+        document.Info.Description = "API para el proyecto web de sofmar";
     };
 });
 
