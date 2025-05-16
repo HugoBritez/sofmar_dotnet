@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
+using System.ComponentModel.DataAnnotations;
 namespace Api.Models.Entities
 {
+    [Table("ubicaciones")]
     public class Ubicacion
     {
+        [Key]
         [Column("ub_codigo")]
         public uint UbCodigo { get; set; }
 

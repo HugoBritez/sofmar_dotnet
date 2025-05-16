@@ -21,6 +21,20 @@ namespace Api.Data
         public DbSet<SubCategoria> SubCategorias { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Iva> Ivas { get; set; }
+        public DbSet<ListaPrecio> ListaPrecio { get; set; }
+        public DbSet<Sucursal> Sucursales { get; set; }
+        public DbSet<Moneda> Moneda { get; set; }
+
+        public DbSet<Venta> Venta { get; set;  }
+
+        public DbSet<DetalleVenta> DetalleVenta { get; set; }
+
+        public DbSet<DetalleVentaBonificacion> DetalleVentaBonificacion { get; set; }
+
+        public DbSet<DetalleArticulosEditado> DetalleArticulosEditados { get; set; }
+
+        public DbSet<DetalleVentaVencimiento> DetalleVentaVencimiento { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

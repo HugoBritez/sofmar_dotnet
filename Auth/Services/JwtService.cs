@@ -9,8 +9,7 @@ namespace Api.Auth.Services
 {
     public interface IJwtService
     {
-        string GenerateToken(LoginResponse user);
-
+        string GenerateToken(UsuarioResponse user);
     }
 
     public class JwtService : IJwtService
@@ -22,12 +21,11 @@ namespace Api.Auth.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(LoginResponse user)
+        public string GenerateToken(UsuarioResponse user)
         {
             var jwtKey = Env.GetString("JWT_KEY");
             var jwtIssuer = Env.GetString("JWT_ISSUER");
             var jwtAudience = Env.GetString("JWT_AUDIENCE");
-
 
             Console.WriteLine($"JWT Key: {jwtKey}");
             Console.WriteLine($"JWT Issuer: {jwtIssuer}");
@@ -39,7 +37,7 @@ namespace Api.Auth.Services
             var claims = new List<Claim>
             {
                 new Claim("op_codigo", user.OpCodigo.ToString()),
-                new Claim("op_usuario", user.OpUsuario ?? string.Empty),
+                new Claim("op_nombre", user.OpNombre),
                 new Claim("or_rol", user.OrRol.ToString())
             };
 

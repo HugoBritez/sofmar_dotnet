@@ -19,7 +19,12 @@ namespace Api.Auth.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+
+            Console.WriteLine("Login");
+            Console.WriteLine(request.Usuario);
+            Console.WriteLine(request.Password);
             var response = await _authService.Login(request.Usuario , request.Password);
+            
 
             if (response == null)
             {

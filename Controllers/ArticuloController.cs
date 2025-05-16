@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Api.Repositories.Interfaces;
 using Api.Models.Dtos.Articulo;
+using Microsoft.AspNetCore.Authorization;
+using Api.Models.Dtos;
 
 namespace Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
+    
     public class ArticuloController : ControllerBase
     {
     private readonly IArticuloRepository _articuloRepository;
@@ -15,7 +19,30 @@ namespace Api.Controllers
         _articuloRepository = articuloRepository;
     }
 
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ArticuloLoteDTO>>> ConsultarArticuloSimple(
+        [FromQuery] uint? articulo_id = null,
+        [FromQuery] string? busqueda = null,
+        [FromQuery] string? codigo_barra = null,
+        [FromQuery] uint? moneda = 1,
+        [FromQuery] bool? stock = null,
+        [FromQuery] uint? deposito = null,
+        [FromQuery] uint? marca = null,
+        [FromQuery] uint? categoria = null,
+        [FromQuery] uint? ubicacion = null,
+        [FromQuery] uint? proveedor = null,
+        [FromQuery] string? cod_interno = null
+    )
+    {
+        var articulos = await _articuloRepository.ConsultarArticuloSimple(
+            articulo_id, busqueda, codigo_barra, moneda, stock, deposito, marca, categoria, ubicacion, proveedor, cod_interno);
+
+        return Ok(articulos);
+    }
+
     [HttpGet("buscar")]
+    
     public async Task<ActionResult<IEnumerable<ArticuloBusquedaDTO>>> BuscarArticulos(
         [FromQuery] uint? articuloId = null,
         [FromQuery] string? busqueda = null,
@@ -37,6 +64,8 @@ namespace Api.Controllers
 
         return Ok(articulos);
     }
+
+
 
     [HttpGet("consultar")]
     public async Task<ActionResult<ArticuloConsultaResponse>> ConsultarArticulos(

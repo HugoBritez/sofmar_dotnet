@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
+using System.ComponentModel.DataAnnotations;
 namespace Api.Models.Entities
 {
+    [Table("operadores")]
     public class Operador
     {
+        [Key]
         [Column("op_codigo")]
         public int OpCodigo { get; set; }
 

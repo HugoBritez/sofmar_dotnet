@@ -3,7 +3,6 @@ using Api.Repositories.Interfaces;
 using Dapper;
 using MySql.Data.MySqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Repositories.Implementations
 {

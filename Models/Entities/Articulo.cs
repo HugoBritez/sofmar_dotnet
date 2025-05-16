@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Api.Models.Entities
 {
+    [Table("articulos")]
     public class Articulo
     {
+        [Key]
         [Column("ar_codigo")]
         public uint ArCodigo { get; set; }
 

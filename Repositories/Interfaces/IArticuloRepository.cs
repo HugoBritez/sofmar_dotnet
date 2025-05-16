@@ -36,6 +36,20 @@ namespace Api.Repositories.Interfaces
         int limite = 50,
         string? tipoValorizacionCosto = null);
 
+        Task<IEnumerable<ArticuloLoteDTO>> ConsultarArticuloSimple(
+            uint? articulo_id,
+            string? busqueda,
+            string? codigo_barra,
+            uint? moneda = 1,
+            bool? stock = null,
+            uint? deposito = null,
+            uint? marca = null,
+            uint? categoria = null,
+            uint? ubicacion = null,
+            uint? proveedor = null,
+            string? cod_interno = null
+        );
+
         Task<IEnumerable<ArticuloCategoriaResponse>> ArticulosPorCategoria();
 
         Task<IEnumerable<ArticuloMarcaResponse>> ArticulosPorMarca();

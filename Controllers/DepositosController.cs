@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Api.Repositories.Interfaces;
 using Api.Models.Dtos.Deposito;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class DepositosController : ControllerBase
     {
         private readonly IDepositosRepository _depositosRepository;

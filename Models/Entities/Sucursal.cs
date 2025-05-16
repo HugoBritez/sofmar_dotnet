@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
-
+using System.ComponentModel.DataAnnotations;
 namespace Api.Models.Entities
 {
+    [Table("sucursales")]
     public class Sucursal
     {
+        [Key]
         [Column("id")]
         public uint Id { get; set; }
 
