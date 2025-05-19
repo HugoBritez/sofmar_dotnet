@@ -48,7 +48,7 @@ namespace Api.Data
 
             modelBuilder.Entity<ArticuloLote>()
                 .HasOne(al => al.Deposito)
-                .WithMany()
+                .WithMany(d => d.ArticulosLote)
                 .HasForeignKey(al => al.AlDeposito);
 
             modelBuilder.Entity<SubCategoria>()

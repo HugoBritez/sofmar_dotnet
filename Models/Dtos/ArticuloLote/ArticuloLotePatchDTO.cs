@@ -7,7 +7,7 @@ namespace Api.Models.Dtos.ArticuloLote
         public string? AlLote { get; set; }
         public decimal? AlCantidad { get; set; }
         public DateTime? AlVencimiento { get; set; }
-        public decimal? AlPreCompra { get; set; }
+        public uint? AlPreCompra { get; set; }
         public uint? AlOrigen { get; set; }
         public string? ALSerie { get; set; }
         public string? AlCodBarra { get; set; }

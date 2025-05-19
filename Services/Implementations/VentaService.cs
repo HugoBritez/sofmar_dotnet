@@ -34,60 +34,63 @@ namespace Api.Services.Implementations
             _articuloLoteRepository = articuloLoteRepository;
         }
 
-        public async Task<Venta> CrearVenta(Venta venta, DetalleVentaDTO detalleVentaDTO)
+        public async Task<Venta> CrearVenta(Venta venta, IEnumerable<DetalleVentaDTO> detalleVentaDTOs)
         {
             var ventaCreada = await _ventaRepository.CrearVenta(venta);
 
-            var detalleVenta = detalleVentaDTO.toDetalleVenta();
-
-            if (detalleVenta != null)
+            foreach (var detalleDTO in detalleVentaDTOs)
             {
-                var detalleVentaCreado = await _detalleVentaRepository.CrearDetalleVenta(detalleVenta);
+                var detalleVenta = detalleDTO.toDetalleVenta();
 
-                var idDetalleVenta = detalleVentaCreado.Codigo;
-
-                if (detalleVentaDTO.LoteId != 0)
+                if (detalleVenta != null)
                 {
-                    var detalleVencimiento = detalleVentaDTO.ToDetalleVencimiento((int)idDetalleVenta);
-                    if (detalleVencimiento != null)
-                    {
-                        await _detalleVentaVencimientoRepository.CrearDetalleVencimiento(detalleVencimiento);
-                    }
+                    detalleVenta.Venta = ventaCreada.Codigo;
+                    var detalleVentaCreado = await _detalleVentaRepository.CrearDetalleVenta(detalleVenta);
+                    var idDetalleVenta = detalleVentaCreado.Codigo;
 
-                    var articuloLoteActual = await _articuloLoteRepository.GetById((uint)detalleVentaDTO.LoteId);
-                    if (articuloLoteActual != null)
+                    // Lote
+                    if (detalleDTO.LoteId != 0)
                     {
-                        var articuloLotePatch = new ArticuloLotePatchDTO
+                        var detalleVencimiento = detalleDTO.ToDetalleVencimiento((int)idDetalleVenta);
+                        if (detalleVencimiento != null)
                         {
-                            AlCantidad = articuloLoteActual.AlCantidad - detalleVentaDTO.DeveCantidad,
-                        };
+                            await _detalleVentaVencimientoRepository.CrearDetalleVencimiento(detalleVencimiento);
+                        }
 
-                        await _articuloLoteRepository.UpdatePartial(articuloLoteActual.AlCodigo, articuloLotePatch);
+                        var articuloLoteActual = await _articuloLoteRepository.GetById((uint)detalleDTO.LoteId);
+                        if (articuloLoteActual != null)
+                        {
+                            var articuloLotePatch = new ArticuloLotePatchDTO
+                            {
+                                AlCantidad = articuloLoteActual.AlCantidad - detalleDTO.DeveCantidad,
+                            };
+
+                            await _articuloLoteRepository.UpdatePartial(articuloLoteActual.AlCodigo, articuloLotePatch);
+                        }
                     }
-                }
 
-
-                if (detalleVentaDTO.DeveBonificacion != 0)
-                {
-                    var detalleBonificacion = detalleVentaDTO.ToBonificacion((int)idDetalleVenta);
-                    if (detalleBonificacion != null)
+                    // Bonificación
+                    if (detalleDTO.DeveBonificacion != 0)
                     {
-                        await _detalleBonificacionRepository.CrearDetalleBonificacion(detalleBonificacion);
+                        var detalleBonificacion = detalleDTO.ToBonificacion((int)idDetalleVenta);
+                        if (detalleBonificacion != null)
+                        {
+                            await _detalleBonificacionRepository.CrearDetalleBonificacion(detalleBonificacion);
+                        }
                     }
-                }
 
-                if (detalleVentaDTO.ArticuloEditado == true)
-                {
-                    var detalleArticuloEditado = detalleVentaDTO.ToDetalleArticulosEditado((int)idDetalleVenta);
-                    if (detalleArticuloEditado != null)
+                    // Artículo editado
+                    if (detalleDTO.ArticuloEditado)
                     {
-                        await _detalleArticulosEditadoRepository.CrearDetalleArticulosEditado(detalleArticuloEditado);
+                        var detalleArticuloEditado = detalleDTO.ToDetalleArticulosEditado((int)idDetalleVenta);
+                        if (detalleArticuloEditado != null)
+                        {
+                            await _detalleArticulosEditadoRepository.CrearDetalleArticulosEditado(detalleArticuloEditado);
+                        }
                     }
                 }
-
-
             }
-            
+
             return ventaCreada;
         }
 

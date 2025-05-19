@@ -5,6 +5,6 @@ namespace Api.Services.Interfaces
 {
     public interface IVentaService
     {
-        Task<Venta> CrearVenta(Venta venta, DetalleVentaDTO detalleVenta);
+        Task<Venta> CrearVenta(Venta venta, IEnumerable<DetalleVentaDTO> detalleVenta);
     }
 }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Api.Models.Entities
 {
-    [Table("detalle_venta")]
+    [Table("detalle_ventas")]
     public class DetalleVenta
     {
         [Key]
@@ -60,5 +60,8 @@ namespace Api.Models.Entities
         public decimal CincoX { get; set; }
         [Column("deve_diez_x")]
         public decimal DiezX { get; set; }
+
+        [ForeignKey("Venta")]
+        public  Venta? VentaNavigation { get; set; }
     }
 }

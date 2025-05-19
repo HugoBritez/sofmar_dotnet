@@ -31,7 +31,7 @@ namespace Api.Models.Entities
         public DateTime AlVencimiento { get; set;}
 
         [Column("al_pre_compra")]
-        public decimal AlPreCompra { get; set; }
+        public uint AlPreCompra { get; set; }
 
         [Column("al_origen")]
         public uint AlOrigen { get; set;}

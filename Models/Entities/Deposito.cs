@@ -48,7 +48,7 @@ namespace Api.Models.Entities
         [Column("dep_inventario")]
         public byte DepInventario { get; set; } = 0;
 
-        public virtual ICollection<ArticuloLote>? ArticuloLotes { get; set; }
+        [InverseProperty("Deposito")]  // Add this attribute
+        public virtual ICollection<ArticuloLote>? ArticulosLote { get; set; }
     }
-
 }

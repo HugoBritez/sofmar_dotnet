@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Api.Models.Entities
 {
-    [Table("venta")]
+    [Table("ventas")]
     public class Venta
     {
         [Key]

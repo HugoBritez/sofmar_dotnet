@@ -1,4 +1,6 @@
 using Api.Models.Entities;
+using Api.Models.ViewModels;
+using Azure;
 
 
 namespace Api.Repositories.Interfaces
@@ -6,5 +8,22 @@ namespace Api.Repositories.Interfaces
     public interface IVentaRepository
     {
         Task<Venta> CrearVenta(Venta venta);
+
+        Task<IEnumerable<VentaViewModel>> ConsultaVentas(
+            string? fecha_desde,
+            string? fecha_hasta,
+            uint? sucursal,
+            uint? cliente,
+            uint? vendedor,
+            uint? articulo,
+            uint? moneda,
+            string? factura,
+            uint? venta,
+            uint? estadoVenta,
+            uint? remisiones,
+            bool? listaFacturasSinCDC,
+            int? page = 1,
+            int itemsPorPagina = 50
+        );
     }
 }

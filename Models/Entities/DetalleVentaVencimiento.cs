@@ -7,6 +7,7 @@ namespace Api.Models.Entities
     [Table("detalle_ventas_vencimiento")]
     public class DetalleVentaVencimiento
     {
+        [Key]
         [Column("id_detalle_venta")]
         public uint DetalleVenta { get; set; }
 
