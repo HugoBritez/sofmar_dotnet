@@ -4,6 +4,8 @@ using Api.Models.Entities;
 using Api.Repositories.Interfaces;
 using Api.Services.Interfaces;
 using Api.Services.Mappers;
+using Api.Audit.Services;
+using Api.Audit.Models;
 
 
 namespace Api.Services.Implementations
@@ -14,17 +16,18 @@ namespace Api.Services.Implementations
         private readonly IDetalleVentaRepository _detalleVentaRepository;
         private readonly IDetalleBonificacionRepository _detalleBonificacionRepository;
         private readonly IDetalleArticulosEditadoRepository _detalleArticulosEditadoRepository;
-
         private readonly IDetalleVentaVencimientoRepository _detalleVentaVencimientoRepository;
-
         private readonly IArticuloLoteRepository _articuloLoteRepository;
+        private readonly IAuditoriaService _auditoriaService;
 
         public VentaService(IVentaRepository ventaRepository,
             IDetalleVentaRepository detalleVentaRepository,
             IDetalleBonificacionRepository detalleBonificacionRepository,
             IDetalleArticulosEditadoRepository detalleArticulosEditadoRepository,
             IDetalleVentaVencimientoRepository detalleVentaVencimientoRepository,
-            IArticuloLoteRepository articuloLoteRepository)
+            IArticuloLoteRepository articuloLoteRepository,
+            IAuditoriaService auditoriaService
+        )
         {
             _ventaRepository = ventaRepository;
             _detalleVentaRepository = detalleVentaRepository;
@@ -32,6 +35,7 @@ namespace Api.Services.Implementations
             _detalleArticulosEditadoRepository = detalleArticulosEditadoRepository;
             _detalleVentaVencimientoRepository = detalleVentaVencimientoRepository;
             _articuloLoteRepository = articuloLoteRepository;
+            _auditoriaService = auditoriaService;
         }
 
         public async Task<Venta> CrearVenta(Venta venta, IEnumerable<DetalleVentaDTO> detalleVentaDTOs)
@@ -91,6 +95,7 @@ namespace Api.Services.Implementations
                 }
             }
 
+            await _auditoriaService.RegistrarAuditoria(5, 1, (int)ventaCreada.Codigo, "Usuario Web",(int)ventaCreada.Vendedor, "Venta creada desde el sistema web" );
             return ventaCreada;
         }
 

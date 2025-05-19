@@ -49,6 +49,16 @@ namespace Api.Controllers
             return Ok(ventas);
         }
 
+
+        [HttpGet("detalles")]
+        public async Task<ActionResult<DetalleVentaViewModel>> ConsultaDetalles(
+            [FromQuery] uint ventaId
+        )
+        {
+            var detalleVenta = await _ventaRepository.ConsultaDetalles(ventaId);
+            return Ok(detalleVenta);
+        }
+
         [HttpPost]
         public async Task<ActionResult<Venta>> CrearVenta(
             [FromBody] CrearVentaDTO crearVentaDTO

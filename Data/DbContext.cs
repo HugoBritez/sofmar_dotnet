@@ -35,6 +35,10 @@ namespace Api.Data
 
         public DbSet<DetalleVentaVencimiento> DetalleVentaVencimiento { get; set; }
 
+        public DbSet<Pedido> Pedido { get; set; }
+        public DbSet<DetallePedido> DetallePedido { get; set;  }
+
+        public DbSet<DetallePedidoFaltante> DetallePedidoFaltante { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

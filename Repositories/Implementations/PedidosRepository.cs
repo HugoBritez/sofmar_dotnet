@@ -2,6 +2,7 @@ using Dapper;
 using Api.Repositories.Base;
 using Api.Repositories.Interfaces;
 using Api.Data;
+using Api.Models.Entities;
 
 namespace Api.Repositories.Implementations
 {
@@ -12,6 +13,14 @@ namespace Api.Repositories.Implementations
         {
             _context = context;
 
+        }
+
+        public async Task<Pedido> CrearPedido(Pedido pedido)
+        {
+            var pedidoCreado = await _context.Pedido.AddAsync(pedido);
+            await _context.SaveChangesAsync();
+
+            return pedidoCreado.Entity; 
         }
 
         public async Task<string> ProcesarPedido(int idPedido)

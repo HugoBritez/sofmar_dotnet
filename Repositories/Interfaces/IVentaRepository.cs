@@ -25,5 +25,7 @@ namespace Api.Repositories.Interfaces
             int? page = 1,
             int itemsPorPagina = 50
         );
+
+        Task<IEnumerable<DetalleVentaViewModel>> ConsultaDetalles(uint ventaId);
     }
 }
