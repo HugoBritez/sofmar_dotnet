@@ -15,6 +15,7 @@ namespace Api.Services.Implementations
         private readonly IAuditoriaService _auditoriaService;
         private readonly IArticuloLoteRepository _articuloLoteRepository;
         private readonly IAreaSecuenciaRepository _areaSecuenciaRepository;
+        private readonly IPedidoEstadoRepository _pedidoEstadoRepository;
 
         private readonly IAuthService _authService;
 
@@ -25,6 +26,7 @@ namespace Api.Services.Implementations
             IAuditoriaService auditoriaService,
             IArticuloLoteRepository articuloLoteRepository,
             IAreaSecuenciaRepository areaSecuenciaRepository,
+            IPedidoEstadoRepository pedidoEstadoRepository,
             IAuthService authService
         )
         {
@@ -34,6 +36,7 @@ namespace Api.Services.Implementations
             _auditoriaService = auditoriaService;
             _articuloLoteRepository = articuloLoteRepository;
             _areaSecuenciaRepository = areaSecuenciaRepository;
+            _pedidoEstadoRepository = pedidoEstadoRepository;
             _authService = authService;
         }
 
@@ -135,11 +138,11 @@ namespace Api.Services.Implementations
 
         public async Task<ResponseViewModel<Pedido>> AutorizarPedido(
             uint idPedido,
-            string usuario,
-            string password
+            string Usuario,
+            string Password
         )
         {
-            LoginResponse loginResponse = await _authService.Login(usuario, password);
+            LoginResponse loginResponse = await _authService.Login(Usuario, Password);
             if (loginResponse == null)
             {
                 return new ResponseViewModel<Pedido>
@@ -160,7 +163,7 @@ namespace Api.Services.Implementations
             var pedidoAAutorizar = await _pedidoRepository.GetById(idPedido);
             var areaPedidoActual = pedidoAAutorizar.Area;
 
-            if (areaPedidoActual == 4)
+            if (areaPedidoActual == 3)
             {
                 return new ResponseViewModel<Pedido>
                 {
@@ -177,11 +180,20 @@ namespace Api.Services.Implementations
                     Message = "Pedido ya se encuentra en el area 'Ventas'"
                 };
             }
-
             var siguienteArea = await _areaSecuenciaRepository.GetSiguienteArea(areaPedidoActual);
 
             pedidoAAutorizar.Area = siguienteArea;
             await _pedidoRepository.SaveChangesAsync();
+            var pedidoEstadoNuevo = new PedidosEstados
+            {
+                Codigo = 0,
+                Pedido = pedidoAAutorizar.Codigo,
+                Area = siguienteArea,
+                Operador = loginResponse.Usuario[0].OpNombre,
+                Fecha = DateTime.Now
+            };
+            await _pedidoEstadoRepository.Crear(pedidoEstadoNuevo);
+
             return new ResponseViewModel<Pedido>
             {
                 Success = true,

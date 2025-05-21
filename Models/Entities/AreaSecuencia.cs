@@ -6,6 +6,7 @@ namespace Api.Models.Entities
     [Table("area_secuencia")]
     public class AreaSecuencia
     {
+        [Key]
         [Column("ac_codigo")]
         public uint Codigo { get; set; }
         [Column("ac_area")]

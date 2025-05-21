@@ -69,11 +69,16 @@ builder.Services.AddScoped<IDetalleArticulosEditadoRepository, DetalleArticuloEd
 builder.Services.AddScoped<IDetalleVentaVencimientoRepository, DetalleVencimientoRepository>();
 builder.Services.AddScoped<IArticuloLoteRepository, ArticuloLoteRepository>();
 builder.Services.AddScoped<IVentaService, VentaService>();
+builder.Services.AddScoped<IAreaSecuenciaRepository, AreaSecuenciaRepository>();
 builder.Services.AddScoped<IPedidosRepository, PedidosRepository>();
-builder.Services.AddScoped<IDetallePedidoRepository, DetallePedidoRepository>(); 
-builder.Services.AddScoped<IDetallePedidoFaltanteRepository, DetallePedidoFaltanteRepository>(); 
-
+builder.Services.AddScoped<IDetallePedidoRepository, DetallePedidoRepository>();
+builder.Services.AddScoped<IDetallePedidoFaltanteRepository, DetallePedidoFaltanteRepository>();
+builder.Services.AddScoped<IPedidoEstadoRepository, PedidoEstadoRepository>();
+builder.Services.AddScoped<IPresupuestosRepository, PresupuestosRepository>();
+builder.Services.AddScoped<IDetallePresupuestoRepository, DetallePresupuestoRepository>();
 builder.Services.AddScoped<IPedidosService, PedidoService>();
+builder.Services.AddScoped<IPresupuestoObservacionRepository, PresupuestoObservacionRepository>();
+builder.Services.AddScoped<IPresupuestoService, PresupuestoService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

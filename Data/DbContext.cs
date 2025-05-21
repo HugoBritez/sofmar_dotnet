@@ -24,23 +24,19 @@ namespace Api.Data
         public DbSet<ListaPrecio> ListaPrecio { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
         public DbSet<Moneda> Moneda { get; set; }
-
         public DbSet<Venta> Venta { get; set;  }
-
         public DbSet<DetalleVenta> DetalleVenta { get; set; }
-
         public DbSet<DetalleVentaBonificacion> DetalleVentaBonificacion { get; set; }
-
         public DbSet<DetalleArticulosEditado> DetalleArticulosEditados { get; set; }
-
         public DbSet<DetalleVentaVencimiento> DetalleVentaVencimiento { get; set; }
-
         public DbSet<Pedido> Pedido { get; set; }
         public DbSet<DetallePedido> DetallePedido { get; set;  }
-
         public DbSet<DetallePedidoFaltante> DetallePedidoFaltante { get; set; }
-
         public DbSet<AreaSecuencia> AreaSecuencia { get; set; }
+        public DbSet<PedidosEstados> PedidoEstado { get; set; }
+        public DbSet<Presupuesto> Presupuesto { get; set; }
+        public DbSet<DetallePresupuesto> DetallePresupuesto { get; set; }
+        public DbSet<PresupuestoObservacion> PresupuestoObservacion { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

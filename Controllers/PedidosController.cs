@@ -78,12 +78,12 @@ namespace Api.Controllers
             return Ok(res);
         }
 
-        [HttpPost]
+        [HttpPost("autorizar/")]
         public async Task<ActionResult<ResponseViewModel<Pedido>>> AutorizarPedido(
             [FromBody] AutorizarPedidoDTO parametros
         )
         {
-            var response =await  _pedidosService.AutorizarPedido(parametros.idPedido, parametros.usuario, parametros.usuario);
+            var response =await  _pedidosService.AutorizarPedido(parametros.idPedido, parametros.Usuario, parametros.Password);
             return Ok(response);
         }
 
