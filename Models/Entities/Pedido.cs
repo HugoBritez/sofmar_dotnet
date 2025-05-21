@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace Api.Models.Entities
 {
     [Table("pedidos")]
     public class Pedido
     {
+        [Key]
         [Column("p_codigo")]
         public uint Codigo { get; set; }
         [Column("p_fecha")]
@@ -20,7 +22,7 @@ namespace Api.Models.Entities
         public uint Deposito { get; set; }
         [Column("p_sucursal")]
         public uint Sucursal { get; set; }
-        [Column("p_decuento")]
+        [Column("p_descuento")]
         public decimal Descuento { get; set; }
         [Column("p_obs")]
         public string Observacion { get; set; } = string.Empty;

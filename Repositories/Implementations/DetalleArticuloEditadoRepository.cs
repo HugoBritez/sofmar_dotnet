@@ -1,6 +1,4 @@
-using Dapper;
-using Microsoft.EntityFrameworkCore;
-using MySql.Data.MySqlClient;
+
 using Api.Data;
 
 using Api.Models.Entities;

@@ -40,6 +40,8 @@ namespace Api.Data
 
         public DbSet<DetallePedidoFaltante> DetallePedidoFaltante { get; set; }
 
+        public DbSet<AreaSecuencia> AreaSecuencia { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

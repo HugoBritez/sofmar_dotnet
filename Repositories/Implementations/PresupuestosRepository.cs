@@ -17,8 +17,6 @@ namespace Api.Repositories.Implementations
         public async Task<string> ProcesarPresupuesto(int idPresupuesto)
         {
             var connection = GetConnection();
-
-
             var query = @"
                 UPDATE presupuesto
                 SET pre_confirmado = 1

@@ -1,11 +1,15 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace Api.Models.Entities
 {
     [Table("detalle_pedido")]
     public class DetallePedido
     {
+        [Key]
         [Column("dp_codigo")]
         public uint Codigo  { get; set; }
+        [Column("dp_pedido")]
+        public uint Pedido { get; set; }
         [Column("dp_articulo")]
         public uint Articulo { get; set; }
         [Column("dp_cantidad")]
