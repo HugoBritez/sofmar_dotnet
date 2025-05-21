@@ -79,6 +79,10 @@ builder.Services.AddScoped<IDetallePresupuestoRepository, DetallePresupuestoRepo
 builder.Services.AddScoped<IPedidosService, PedidoService>();
 builder.Services.AddScoped<IPresupuestoObservacionRepository, PresupuestoObservacionRepository>();
 builder.Services.AddScoped<IPresupuestoService, PresupuestoService>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IMarcaRepository, MarcaRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

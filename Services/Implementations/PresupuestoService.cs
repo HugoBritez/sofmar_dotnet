@@ -25,10 +25,8 @@ namespace Api.Services.Implementations
 
         public async Task<ResponseViewModel<Presupuesto>> CrearPresupuesto(Presupuesto presupuesto, PresupuestoObservacion observacion, IEnumerable<DetallePresupuesto> detalle)
         {
-            Console.WriteLine("iniciando creacion del presupuesto");
             if (presupuesto.Codigo != 0)
             {
-                Console.WriteLine("presupuesto encontrado, iniciando update");
                 var presupuestoActualizado = await _presupuestoRepository.Update(presupuesto);
                 //eliminamos los detalles viejos del presu
                 await _detallePresupuestoRepository.Delete(presupuesto.Codigo);
@@ -58,9 +56,7 @@ namespace Api.Services.Implementations
             }
             else
             {
-                Console.WriteLine("iniciando creacion de un nuevo presupuesto");
                 var presupuestoNuevoCreado = await _presupuestoRepository.Crear(presupuesto);
-                Console.WriteLine("Nuevo presupuesto creado",  presupuestoNuevoCreado);
                 var presupuestoObservacionCreado = await _presupuestoObservacionRepository.Crear(observacion);
                 foreach (DetallePresupuesto det in detalle)
                 {

@@ -186,12 +186,6 @@ namespace Api.Repositories.Implementations
                             ORDER BY p.p_cliente DESC";
 
 
-            Console.WriteLine(query);
-foreach (var name in parameters.ParameterNames)
-{
-    Console.WriteLine($"{name}: {parameters.Get<dynamic>(name)}");
-}
-
             return await connection.QueryAsync<PedidoViewModel>(query, parameters);
         }
 
