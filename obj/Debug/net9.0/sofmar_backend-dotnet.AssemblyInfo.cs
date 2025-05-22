@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("sofmar_backend-dotnet")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e834ffa00490a227a9f98e7e0220deabdca93752")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+21adffa47269442f5d315ecbf037175d542f01b5")]
 [assembly: System.Reflection.AssemblyProductAttribute("sofmar_backend-dotnet")]
 [assembly: System.Reflection.AssemblyTitleAttribute("sofmar_backend-dotnet")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

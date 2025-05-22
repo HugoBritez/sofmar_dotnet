@@ -83,6 +83,11 @@ builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IMarcaRepository, MarcaRepository>();
+builder.Services.AddScoped<IUbicacionesRepository, UbicacionesRepository>();
+builder.Services.AddScoped<IProveedoresRepository, ProveedoresRepository>();
+builder.Services.AddScoped<IUnidadMedidaRepository, UnidadesMedidaRepository>();
+builder.Services.AddScoped<ISububicacionRepository, SububicacionRepository>();
+builder.Services.AddScoped<IConfiguracionRepository, ConfiguracionRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
@@ -127,6 +132,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ResponseWrapperMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

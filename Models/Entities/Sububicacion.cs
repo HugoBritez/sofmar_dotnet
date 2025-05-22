@@ -14,7 +14,5 @@ namespace Api.Models.Entities
 
         [Column("s_ubicacion")]
         public uint SUbicacion { get; set; }
-
-        public virtual Ubicacion? Ubicacion { get; set; }
     }
 }

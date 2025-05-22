@@ -37,6 +37,10 @@ namespace Api.Data
         public DbSet<Presupuesto> Presupuesto { get; set; }
         public DbSet<DetallePresupuesto> DetallePresupuesto { get; set; }
         public DbSet<PresupuestoObservacion> PresupuestoObservacion { get; set; }
+        public DbSet<Proveedor> Proveedores { get; set; }
+        public DbSet<Zona> Zonas { get; set; }
+        public DbSet<UnidadMedida> UnidadMedidas { get; set; }
+        public DbSet<Configuracion> Configuraciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
