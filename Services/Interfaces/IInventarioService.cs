@@ -6,7 +6,6 @@ namespace Api.Services.Interfaces
 {
     public interface IInventarioService
     {
-
         Task<InventarioAuxiliar> AnularInventario(uint id);
         Task<InventarioAuxiliar> CerrarInventario(uint id, uint userId);
         Task<InventarioAuxiliar> AutorizarInventario(uint id);

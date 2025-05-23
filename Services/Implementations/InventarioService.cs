@@ -95,6 +95,7 @@ namespace Api.Services.Implementations
             {
                 throw new InvalidOperationException($"No se puede autorizar un inventario anulado.");
             }
+            
             inventarioAAutorizar.Autorizado = 1;
             await _inventarioRepository.UpdateInventario(inventarioAAutorizar);
 
@@ -103,6 +104,7 @@ namespace Api.Services.Implementations
             foreach (InventarioAuxiliarItems item in detallesInventario)
             {
                 var lote = await _articuloLoteRepository.GetById(item.IdLote);
+                var articulo = await _articuloRepository.GetById(item.IdArticulo);
                 if (lote != null)
                 {
                     var patchDto = new ArticuloLotePatchDTO
@@ -111,6 +113,11 @@ namespace Api.Services.Implementations
                     };
 
                     await _articuloLoteRepository.UpdatePartial(lote.AlCodigo, patchDto);
+                }
+                if (articulo != null)
+                {
+                    articulo.ArBloquear = 0; 
+                    await _articuloRepository.Update(articulo);  //desbloqueamos el articulo para que permita movimientos de nuevo
                 }
             }
             return inventarioAAutorizar;
@@ -170,7 +177,7 @@ namespace Api.Services.Implementations
                 throw new InvalidOperationException("El inventario está cerrado o anulado.");
             }
 
-            if (existeInventario.Autorizado == 0)
+            if (existeInventario.Autorizado == 1)
             {
                 throw new InvalidOperationException("El inventario ya fue autorizado.");
             }

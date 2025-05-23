@@ -739,7 +739,7 @@ namespace Api.Repositories.Implementations
 
         public async Task<Articulo?> Update(Articulo articulo)
         {
-            var articuloAEditar = GetById(articulo.ArCodigo);
+            var articuloAEditar =await  GetById(articulo.ArCodigo);
             if (articuloAEditar == null)
             {
                 return null;

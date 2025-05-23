@@ -11,7 +11,6 @@ namespace Api.Data
             : base(options)
         {
         }
-
         public DbSet<Articulo> Articulos { get; set; }
         public DbSet<ArticuloLote> ArticuloLotes { get; set; }
         public DbSet<Deposito> Depositos { get; set; }
@@ -24,13 +23,13 @@ namespace Api.Data
         public DbSet<ListaPrecio> ListaPrecio { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
         public DbSet<Moneda> Moneda { get; set; }
-        public DbSet<Venta> Venta { get; set;  }
+        public DbSet<Venta> Venta { get; set; }
         public DbSet<DetalleVenta> DetalleVenta { get; set; }
         public DbSet<DetalleVentaBonificacion> DetalleVentaBonificacion { get; set; }
         public DbSet<DetalleArticulosEditado> DetalleArticulosEditados { get; set; }
         public DbSet<DetalleVentaVencimiento> DetalleVentaVencimiento { get; set; }
         public DbSet<Pedido> Pedido { get; set; }
-        public DbSet<DetallePedido> DetallePedido { get; set;  }
+        public DbSet<DetallePedido> DetallePedido { get; set; }
         public DbSet<DetallePedidoFaltante> DetallePedidoFaltante { get; set; }
         public DbSet<AreaSecuencia> AreaSecuencia { get; set; }
         public DbSet<PedidosEstados> PedidoEstado { get; set; }
@@ -43,6 +42,14 @@ namespace Api.Data
         public DbSet<Configuracion> Configuraciones { get; set; }
         public DbSet<InventarioAuxiliar> InventariosAuxiliares { get; set; }
         public DbSet<InventarioAuxiliarItems> InventarioAuxiliarItems { get; set; }
+        public DbSet<Compra> Compras { get; set; }
+        public DbSet<DetalleCompra> DetalleCompras { get; set; }
+
+        public DbSet<OrdenCompra> OrdenesCompra { get; set; }
+
+        public DbSet<Transferencia> Transferencias { get; set; }
+        public DbSet<TransferenciaItem> TransferenciaItems { get; set; }
+        public DbSet<TransferenciaItemVencimiento> TransferenciaItemsVencimiento { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +70,21 @@ namespace Api.Data
                 .HasOne(sc => sc.Categoria)
                 .WithMany()
                 .HasForeignKey(sc => sc.ScCategoria);
+
+            modelBuilder.Entity<InventarioAuxiliarItems>()
+                .HasOne(item => item.Inventario)
+                .WithMany(inv => inv.Items)
+                .HasForeignKey(item => item.IdInventario);
+
+            modelBuilder.Entity<DetalleCompra>()
+                .HasOne(detalle => detalle.CompraNavigation)
+                .WithMany(Compra => Compra.Items)
+                .HasForeignKey(detalle => detalle.Compra);
+
+            modelBuilder.Entity<TransferenciaItem>()
+                .HasOne(item => item.TransferenciaNavigation)
+                .WithMany(trans => trans.Items)
+                .HasForeignKey(item => item.Transferencia);
         }
     }
 }

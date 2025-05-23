@@ -10,5 +10,9 @@ namespace Api.Repositories.Interfaces
         Task<ArticuloLote> Create(ArticuloLote articuloLote);
 
         Task<ArticuloLote?> UpdatePartial(uint id, ArticuloLotePatchDTO articuloLotePatchDTO);
+
+        Task<ArticuloLote> Update(ArticuloLote articulo);
+
+        Task<ArticuloLote?> BuscarPorDeposito(uint id_articulo,int control_vencimiento , uint id_deposito, string lote);
     }
 }

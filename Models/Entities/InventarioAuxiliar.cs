@@ -10,9 +10,9 @@ namespace Api.Models.Entities
         [Column("id")]
         public uint Id { get; set; }
         [Column("fecha")]
-        public string FechaInicio { get; set; } = string.Empty;
+        public DateTime FechaInicio { get; set; }
         [Column("hora")]
-        public string HoraInicio { get; set; } = string.Empty;
+        public TimeSpan HoraInicio { get; set; }
         [Column("operador")]
         public uint Operador { get; set; }
         [Column("sucursal")]
@@ -28,8 +28,9 @@ namespace Api.Models.Entities
         [Column("autorizado")]
         public int Autorizado { get; set; }
         [Column("fecha_cierre")]
-        public string FechaCierre { get; set; } = string.Empty;
+        public DateTime? FechaCierre { get; set; }
         [Column("hora_cierre")]
-        public string HoraCierre { get; set; } = string.Empty;
+        public TimeSpan? HoraCierre { get; set; }
+        public virtual ICollection<InventarioAuxiliarItems>? Items { get; set; }
     }
 }

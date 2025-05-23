@@ -89,6 +89,15 @@ builder.Services.AddScoped<IUnidadMedidaRepository, UnidadesMedidaRepository>();
 builder.Services.AddScoped<ISububicacionRepository, SububicacionRepository>();
 builder.Services.AddScoped<IConfiguracionRepository, ConfiguracionRepository>();
 builder.Services.AddScoped<IInventarioRepository, InventarioRepository>();
+builder.Services.AddScoped<IDetalleInventarioRepository, DetalleInventarioRepository>();
+builder.Services.AddScoped<IInventarioService, InventarioService>();
+builder.Services.AddScoped<IComprasRepository, ComprasRepository>();
+builder.Services.AddScoped<IDetalleComprasRepository, DetalleComprasRepository>();
+builder.Services.AddScoped<IControlIngresoRepository, ControlIngresoRepository>();
+builder.Services.AddScoped<ITransferenciasRepository, TransferenciasRepository>();
+builder.Services.AddScoped<ITransferenciasItemsRepository, TransferenciasItemsRepository>();
+builder.Services.AddScoped<ITransferenciasItemsVencimientoRepository, TransferenciaItemsVencimientoRepository>();
+builder.Services.AddScoped<IControlIngresoService, ControlIngresoService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

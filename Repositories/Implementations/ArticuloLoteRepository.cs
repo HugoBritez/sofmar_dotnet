@@ -115,5 +115,22 @@ namespace Api.Repositories.Implementations
             return existingArticuloLote;
         }
 
+        public async Task<ArticuloLote> Update(ArticuloLote articulo)
+        {
+            _context.ArticuloLotes.Update(articulo);
+            await _context.SaveChangesAsync();
+
+            return articulo;
+        }
+
+        public async Task<ArticuloLote?> BuscarPorDeposito(uint id_articulo,int control_vencimiento , uint id_deposito, string lote)
+        {
+            return await _context.ArticuloLotes
+                .Where(al => al.AlArticulo == id_articulo 
+                    && al.AlDeposito == id_deposito
+                    && (control_vencimiento != 1 || al.AlLote == lote))
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

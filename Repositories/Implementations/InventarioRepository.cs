@@ -58,30 +58,30 @@ namespace Api.Repositories.Implementations
 
             if (estado.HasValue)
             {
-                where += " AND estado = @estado";
+                where += " AND ia.estado = @estado";
                 parameters.Add("estado", estado);
             }
 
             if (deposito.HasValue)
             {
-                where += " AND deposito = @deposito";
+                where += " AND ia.deposito = @deposito";
                 parameters.Add("@deposito", deposito);
             }
             if (!string.IsNullOrEmpty(nro_inventario))
             {
-                where += " AND nro_inventario = @nro_inventario";
+                where += " AND ia.nro_inventario = @nro_inventario";
                 parameters.Add("@nro_inventario", nro_inventario);
             }
 
 
             var query =
-            @"
+            @$"
                SELECT  
                 ia.id,
                 ia.fecha as fecha_inicio,
-                ia.hora as hora_inicio,
+                TIME_FORMAT(ia.hora, '%H:%i') as hora_inicio,
                 ia.fecha_cierre,
-                ia.hora_cierre,
+                TIME_FORMAT(ia.hora_cierre, '%H:%i') as hora_cierre,
                 ia.operador as operador_id,
                 op.op_nombre as operador_nombre,
                 ia.sucursal as sucursal_id,
@@ -90,15 +90,16 @@ namespace Api.Repositories.Implementations
                 de.dep_descripcion as deposito_nombre,
                 ia.nro_inventario,
                 ia.estado,
-                ia.autorizado,
+                ia.autorizado
               FROM inventario_auxiliar ia
               INNER JOIN operadores op ON ia.operador = op.op_codigo
               INNER JOIN sucursales su ON ia.sucursal = su.id
               INNER JOIN depositos de ON ia.deposito = de.dep_codigo
-              ${where}
-              ORDER BY ia.fecha DESC, ia.hora DESC 
-            " + where + "ORDER BY ia.fecha DESC, ia.hora DESC";
+              {where}
+              ORDER BY ia.fecha DESC, ia.hora DESC";
 
+
+            Console.WriteLine(query);
             return await connection.QueryAsync<InventarioViewModel>(query, parameters);
         }
     }
