@@ -41,6 +41,8 @@ namespace Api.Data
         public DbSet<Zona> Zonas { get; set; }
         public DbSet<UnidadMedida> UnidadMedidas { get; set; }
         public DbSet<Configuracion> Configuraciones { get; set; }
+        public DbSet<InventarioAuxiliar> InventariosAuxiliares { get; set; }
+        public DbSet<InventarioAuxiliarItems> InventarioAuxiliarItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

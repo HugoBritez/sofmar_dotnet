@@ -6,6 +6,8 @@ namespace Api.Models.Dtos.Articulo
     public uint IdLote { get; set; }
     public string? Lote { get; set; }
     public uint IdArticulo { get; set; }
+    public string CodInterno { get; set; } = string.Empty;
+    public uint ControlVencimiento { get; set; }
     public string? CodigoBarra { get; set; }
     public string Descripcion { get; set; } = string.Empty;
     public byte StockNegativo { get; set; }

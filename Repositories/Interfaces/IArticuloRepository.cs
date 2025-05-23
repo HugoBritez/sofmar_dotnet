@@ -1,4 +1,5 @@
 using Api.Models.Dtos.Articulo;
+using Api.Models.Entities;
 
 namespace Api.Repositories.Interfaces
 {
@@ -56,7 +57,9 @@ namespace Api.Repositories.Interfaces
 
         Task<IEnumerable<ArticuloSeccionResponse>> ArticulosPorSeccion();
 
-        Task<IEnumerable<ArticuloEnPedidoResponse>> ArticulosEnPedido( int articulo_id, int id_lote);
+        Task<IEnumerable<ArticuloEnPedidoResponse>> ArticulosEnPedido(int articulo_id, int id_lote);
+        Task<Articulo> GetById(uint id);
+        Task<Articulo?> Update(Articulo articulo);
 
     }
 }

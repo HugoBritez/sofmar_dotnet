@@ -4,6 +4,8 @@ using Api.Models.Dtos.Articulo;
 using Dapper;
 using MySql.Data.MySqlClient;
 using Api.Models.Dtos;
+using Api.Models.Entities;
+using Api.Data;
 
 
 namespace Api.Repositories.Implementations
@@ -11,11 +13,13 @@ namespace Api.Repositories.Implementations
     public class ArticuloRepository : IArticuloRepository
     {
         public required string _connectionString { get; init; }
+        public readonly ApplicationDbContext _context;
 
-        public ArticuloRepository(IConfiguration configuration)
+        public ArticuloRepository(IConfiguration configuration, ApplicationDbContext context)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection") ??
                 throw new ArgumentNullException(nameof(configuration), "Connection string 'DefaultConnection' not found.");
+            _context = context;
         }
 
         public async Task<IEnumerable<ArticuloBusquedaDTO>> BuscarArticulos(
@@ -505,10 +509,10 @@ namespace Api.Repositories.Implementations
                 }
                 else if (moneda.HasValue && moneda.Value == 3)
                 {
-                   moneda_query = @"
+                    moneda_query = @"
                       ar.ar_pcr as precio_costo,
                       ar.ar_pvr as precio_venta,
-                    "; 
+                    ";
                 }
                 else if (moneda.HasValue && moneda.Value == 4)
                 {
@@ -725,6 +729,26 @@ namespace Api.Repositories.Implementations
 
             using var connection = new MySqlConnection(_connectionString);
             return await connection.QueryAsync<ArticuloEnPedidoResponse>(query, parameters);
+        }
+
+        public async Task<Articulo> GetById(uint id)
+        {
+            var articulo = await _context.Articulos.FirstOrDefaultAsync(ar => ar.ArCodigo == id);
+            return articulo ?? new Articulo();
+        }
+
+        public async Task<Articulo?> Update(Articulo articulo)
+        {
+            var articuloAEditar = GetById(articulo.ArCodigo);
+            if (articuloAEditar == null)
+            {
+                return null;
+            }
+
+            _context.Entry(articuloAEditar).CurrentValues.SetValues(articulo);
+            await _context.SaveChangesAsync();
+
+            return articulo;
         }
     }
 }

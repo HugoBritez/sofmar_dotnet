@@ -88,6 +88,7 @@ builder.Services.AddScoped<IProveedoresRepository, ProveedoresRepository>();
 builder.Services.AddScoped<IUnidadMedidaRepository, UnidadesMedidaRepository>();
 builder.Services.AddScoped<ISububicacionRepository, SububicacionRepository>();
 builder.Services.AddScoped<IConfiguracionRepository, ConfiguracionRepository>();
+builder.Services.AddScoped<IInventarioRepository, InventarioRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
