@@ -1,28 +1,24 @@
 using Api.Models.Dtos;
 using Api.Repositories.Interfaces;
 using Api.Services.Interfaces;
-using Api.Services.Mappers;
-using Microsoft.Identity.Client;
-
-
 namespace Api.Services.Implementations
 {
     public class ContabilidadService : IContabilidadService
     {
         private readonly IContabilidadRepository _contabilidadRepository;
-
         public ContabilidadService(IContabilidadRepository contabilidadRepository)
         {
             _contabilidadRepository = contabilidadRepository;
         }
-
         public async Task<uint> GuardarAsientoContable(GuardarAsientoContableDTO parametros)
         {
+
+            Console.WriteLine("Guardando el asiento con los siguientes parametros", parametros.Factura, parametros.Fecha, parametros.Moneda, parametros.CajaDefinicion, parametros.TipoVenta, parametros.Cotizacion);
             if (!parametros.Automatico) return 0;
 
             var confiAsientoVenta = await _contabilidadRepository.GetConfiguracionAsiento(1); // para ventas facturadas
             var configAsientoVentaComun = await _contabilidadRepository.GetConfiguracionAsiento(8); // para ventas comunes
-
+            var configAsientoServicio = await _contabilidadRepository.GetConfiguracionAsiento(5); // para servicios
             var totalExentas = parametros.TotalExentas;
             var total5 = parametros.TotalCinco;
             var total10 = parametros.TotalDiez;
@@ -41,7 +37,7 @@ namespace Api.Services.Implementations
                 Sucursal = parametros.Sucursal,
                 Moneda = parametros.Moneda,
                 Operador = parametros.Operador,
-                Documento = parametros.Factura ?? parametros.Referencia.ToString(),
+                Documento = parametros.Factura.Length > 0 ? parametros.Factura : parametros.Referencia.ToString(),
                 Numero = parametros.NumeroAsiento,
                 Fecha = parametros.Fecha,
                 FechaAsiento = parametros.Fecha,
@@ -55,17 +51,18 @@ namespace Api.Services.Implementations
             var idAsiento = await _contabilidadRepository.InsertarAsientoContable(asientoContable);
 
 
-            string conceptoAsiento = parametros.Factura != null
-                ? $"Venta Factura {confiAsientoVenta.Concepto.Trim()} - {parametros.Factura}"
-                : $"Venta Comprobante {idAsiento}";
+            string conceptoAsiento = string.IsNullOrWhiteSpace(parametros.Factura)
+                ? $"Nota Interna N°:{parametros.Referencia}"
+                : $"{confiAsientoVenta.Concepto.Trim()} - {parametros.Factura}";
+
 
             int planDeCuentas;
 
-            if (parametros.TipoVenta == 1)
+            if (parametros.TipoVenta == 0) //al contado
             {
                 if (parametros.CajaDefinicion != null)
                 {
-                    planDeCuentas = await _contabilidadRepository.BuscarCodigoPlanCuentaCajaDef(parametros.CajaDefinicion ?? 0);
+                    planDeCuentas = await _contabilidadRepository.BuscarCodigoPlanCuentaCajaDef((uint)parametros.CajaDefinicion);
                 }
                 else
                 {
@@ -75,8 +72,8 @@ namespace Api.Services.Implementations
             else
             {
                 planDeCuentas = parametros.Moneda == 1
-                    ? (int)configAsientoVentaComun.Credito
-                    : (int)configAsientoVentaComun.CreditoD;
+                    ? (int)confiAsientoVenta.Credito
+                    : (int)confiAsientoVenta.CreditoD;
             }
 
             decimal debeCaja = totalExentas + total5 + total10;
@@ -85,43 +82,98 @@ namespace Api.Services.Implementations
             {
                 Asiento = idAsiento,
                 Plan = (uint)planDeCuentas,
-                Debe = _contabilidadRepository.QuitarComas(debeCaja),
+                Debe = Math.Round(debeCaja, 2),
                 Haber = 0,
                 Concepto = conceptoAsiento
             };
 
             await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoContable);
+            //SI ES UN SERVICIO
+            if (parametros.Servicio == 1)
+            {
+                if (total5 > 0)
+                {
+                    // PARA SERVICIOS 5%
+                    uint planGravadaCinco = configAsientoServicio.Gravada;
+                    decimal montoGravadaCinco = total5 - (total5 / 21);
 
+                    var detalleAsientoGravadasCinco = new DetalleAsientoContableDTO
+                    {
+                        Asiento = idAsiento,
+                        Plan = planGravadaCinco,
+                        Debe = 0,
+                        Haber = Math.Round(montoGravadaCinco, 2),
+                        Concepto = $"{conceptoAsiento}"
+                    };
+
+                    await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadasCinco);
+                }
+
+                if (total10 > 0)
+                {
+                    // PARA SERVICIOS 10%
+                    uint planGravadaDiez = configAsientoServicio.Gravada10;
+                    decimal montoGravadaDiez = total10 - (total10 / 11);
+                    var detalleAsientoGravadasDiez = new DetalleAsientoContableDTO
+                    {
+                        Asiento = idAsiento,
+                        Plan = planGravadaDiez,
+                        Debe = 0,
+                        Haber = Math.Round(montoGravadaDiez, 2),
+                        Concepto = $"{conceptoAsiento}"
+                    };
+                    await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadasDiez);
+                }
+
+                if (totalExentas > 0)
+                {
+                    uint planExentas = configAsientoServicio.Exenta;
+                    decimal montoExentas = totalExentas;
+
+                    var detalleAsientoExentas = new DetalleAsientoContableDTO
+                    {
+                        Asiento = idAsiento,
+                        Plan = planExentas,
+                        Debe = 0,
+                        Haber = Math.Round(montoExentas),
+                        Concepto = $"{conceptoAsiento}"
+                    };
+
+                    await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoExentas);
+                }
+            }
+            // PARA TODO LO QUE NO SEA UN SERVICIO
             if (total5 > 0)
             {
+                // PARA LA GRAVADA 5%
                 uint planGravadaCinco = parametros.ImprimirLegal == 1
                     ? confiAsientoVenta.Gravada
                     : configAsientoVentaComun.Gravada;
-                string montoGravadaCinco = (total5 - (total5 / 21)).ToString("0.00");
+                decimal montoGravadaCinco = total5 - (total5 / 21);
 
                 var detalleAsientoGravadasCinco = new DetalleAsientoContableDTO
                 {
                     Asiento = idAsiento,
                     Plan = planGravadaCinco,
                     Debe = 0,
-                    Haber = _contabilidadRepository.QuitarComas(decimal.Parse(montoGravadaCinco)),
+                    Haber = Math.Round(montoGravadaCinco, 2),
                     Concepto = $"{conceptoAsiento}"
                 };
 
                 await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadasCinco);
 
-
+                // PARA LA CUENTA DE IVA 5%
                 uint planIvaCinco = parametros.ImprimirLegal == 1
                     ? confiAsientoVenta.Iva5
                     : configAsientoVentaComun.Iva5;
-                string montoIvaCinco = (total5 / 21).ToString("0.00");
+                decimal montoIvaCinco = total5 / 21;
 
                 var detalleAsientoIvaCinco = new DetalleAsientoContableDTO
                 {
                     Asiento = idAsiento,
                     Plan = planIvaCinco,
                     Debe = 0,
-                    Haber = _contabilidadRepository.QuitarComas(decimal.Parse(montoIvaCinco)),
+                    Haber = Math.Round(montoIvaCinco, 2),
                     Concepto = $"{conceptoAsiento}"
                 };
 
@@ -130,31 +182,33 @@ namespace Api.Services.Implementations
 
             if (total10 > 0)
             {
+                // PARA LA GRAVADA 10%
                 uint planGravadaDiez = parametros.ImprimirLegal == 1
                      ? confiAsientoVenta.Gravada10
                      : configAsientoVentaComun.Gravada10;
-                string montoGravadaDiez = (total10 - (total10 / 11)).ToString("0.00");
+                decimal montoGravadaDiez = total10 - (total10 / 11);
                 var detalleAsientoGravadasDiez = new DetalleAsientoContableDTO
                 {
                     Asiento = idAsiento,
                     Plan = planGravadaDiez,
                     Debe = 0,
-                    Haber = _contabilidadRepository.QuitarComas(decimal.Parse(montoGravadaDiez)),
+                    Haber = Math.Round(montoGravadaDiez, 2),
                     Concepto = $"{conceptoAsiento}"
                 };
-                await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadasDiez);
 
+                await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadasDiez);
+                //PARA LA CUENTA EN IVA 10%
                 uint planIvaDiez = parametros.ImprimirLegal == 1
                     ? confiAsientoVenta.Iva10
                     : configAsientoVentaComun.Iva10;
-                string montoIvaDiez = (total10 / 11).ToString("0.00");
+                decimal montoIvaDiez = total10 / 11;
 
                 var detalleAsientoIvaDiez = new DetalleAsientoContableDTO
                 {
                     Asiento = idAsiento,
                     Plan = planIvaDiez,
                     Debe = 0,
-                    Haber = _contabilidadRepository.QuitarComas(decimal.Parse(montoIvaDiez)),
+                    Haber = Math.Round(montoIvaDiez, 2),
                     Concepto = $"{conceptoAsiento}"
                 };
 
@@ -166,14 +220,14 @@ namespace Api.Services.Implementations
                 uint planExentas = parametros.ImprimirLegal == 1
                     ? confiAsientoVenta.Exenta
                     : configAsientoVentaComun.Exenta;
-                string montoExentas = totalExentas.ToString("0.00");
+                decimal montoExentas = totalExentas;
 
                 var detalleAsientoExentas = new DetalleAsientoContableDTO
                 {
                     Asiento = idAsiento,
                     Plan = planExentas,
                     Debe = 0,
-                    Haber = _contabilidadRepository.QuitarComas(decimal.Parse(montoExentas)),
+                    Haber = Math.Round(montoExentas),
                     Concepto = $"{conceptoAsiento}"
                 };
 
@@ -184,6 +238,9 @@ namespace Api.Services.Implementations
 
         public async Task<uint> GuardarCostoAsientoContable(GuardarCostoAsientoContableDTO parametros)
         {
+
+            Console.WriteLine("Guardando el costo con los siguientes parametros", parametros.Factura, parametros.Fecha, parametros.Moneda, parametros.Cotizacion);
+
             if (!parametros.Automatico) return 0;
 
             var configAsientoCosto = await _contabilidadRepository.GetConfiguracionAsiento(6); // para ventas facturadas
@@ -209,7 +266,7 @@ namespace Api.Services.Implementations
                 Sucursal = parametros.Sucursal,
                 Moneda = parametros.Moneda,
                 Operador = parametros.Operador,
-                Documento = parametros.Factura ?? parametros.Referencia.ToString(),
+                Documento = parametros.Factura.Length > 0 ? parametros.Factura : parametros.Referencia.ToString(),
                 Numero = numeroAsiento,
                 Fecha = parametros.Fecha,
                 FechaAsiento = parametros.Fecha,
@@ -222,9 +279,11 @@ namespace Api.Services.Implementations
 
             var idAsiento = await _contabilidadRepository.InsertarAsientoContable(asientoContable);
 
-            string conceptoAsiento = parametros.Factura != null
-                ? $"Venta Factura {configAsientoCosto.Concepto.Trim()} - {parametros.Factura}"
-                : $"Venta Comprobante {idAsiento}";
+
+            string conceptoAsiento = string.IsNullOrEmpty(parametros.Factura)
+                    ? $"Costo de Nota Interna N°:{parametros.Referencia}"
+                    : $"{configAsientoCosto.Concepto.Trim()} - {parametros.Factura}";
+
 
             var totalGravadas = costoTotal5 + costoTotal10;
 
@@ -242,7 +301,6 @@ namespace Api.Services.Implementations
                     Haber = 0,
                     Concepto = $"{conceptoAsiento}"
                 };
-
 
                 await _contabilidadRepository.InsertarDetalleAsientoContable(detalleAsientoGravadas);
             }

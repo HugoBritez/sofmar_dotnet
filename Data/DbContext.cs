@@ -50,6 +50,13 @@ namespace Api.Data
         public DbSet<Transferencia> Transferencias { get; set; }
         public DbSet<TransferenciaItem> TransferenciaItems { get; set; }
         public DbSet<TransferenciaItemVencimiento> TransferenciaItemsVencimiento { get; set; }
+        public DbSet<Agenda> Agendas{ get; set; }
+        public DbSet<AgendasNotas> AgendasNotas{ get; set; }
+        public DbSet<Localizacion> Localizaciones{ get; set; }
+        public DbSet<AgendaSubvisita> AgendaSubvisitas{ get; set; }
+        public DbSet<ConfiguracionAsiento> ConfiguracionAsientos { get; set; }
+        public DbSet<Cotizacion> Cotizaciones { get; set; }
+        public DbSet<MetodoPago> MetodosPago { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

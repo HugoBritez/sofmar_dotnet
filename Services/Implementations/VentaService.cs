@@ -18,7 +18,11 @@ namespace Api.Services.Implementations
         private readonly IDetalleArticulosEditadoRepository _detalleArticulosEditadoRepository;
         private readonly IDetalleVentaVencimientoRepository _detalleVentaVencimientoRepository;
         private readonly IArticuloLoteRepository _articuloLoteRepository;
+        private readonly IContabilidadService _contabilidadService;
         private readonly IAuditoriaService _auditoriaService;
+        private readonly ICotizacionRepository _cotizacionRepository;
+        private readonly IPedidosRepository _pedidosRepository;
+        private readonly IDetallePedidoRepository _detallePedidosRepository;
 
         public VentaService(IVentaRepository ventaRepository,
             IDetalleVentaRepository detalleVentaRepository,
@@ -26,7 +30,11 @@ namespace Api.Services.Implementations
             IDetalleArticulosEditadoRepository detalleArticulosEditadoRepository,
             IDetalleVentaVencimientoRepository detalleVentaVencimientoRepository,
             IArticuloLoteRepository articuloLoteRepository,
-            IAuditoriaService auditoriaService
+            IContabilidadService contabilidadService,
+            IAuditoriaService auditoriaService,
+            IPedidosRepository pedidosRepository,
+            IDetallePedidoRepository detallePedidoRepository,
+            ICotizacionRepository cotizacionRepository
         )
         {
             _ventaRepository = ventaRepository;
@@ -35,12 +43,23 @@ namespace Api.Services.Implementations
             _detalleArticulosEditadoRepository = detalleArticulosEditadoRepository;
             _detalleVentaVencimientoRepository = detalleVentaVencimientoRepository;
             _articuloLoteRepository = articuloLoteRepository;
+            _contabilidadService = contabilidadService;
             _auditoriaService = auditoriaService;
+            _pedidosRepository = pedidosRepository;
+            _detallePedidosRepository = detallePedidoRepository;
+            _cotizacionRepository = cotizacionRepository;
         }
-
-        public async Task<Venta> CrearVenta(Venta venta, IEnumerable<DetalleVentaDTO> detalleVentaDTOs)
+        public async Task<Venta> CrearVenta(VentaDTO venta, IEnumerable<DetalleVentaDTO> detalleVentaDTOs)
         {
             var ventaCreada = await _ventaRepository.CrearVenta(venta);
+            decimal totalExentas = 0;
+            decimal totalCinco = 0;
+            decimal totalDiez = 0;
+
+            decimal costoTotalExentas = 0;
+            decimal costoTotalCinco = 0;
+            decimal costoTotalDiez = 0;
+
 
             foreach (var detalleDTO in detalleVentaDTOs)
             {
@@ -48,17 +67,46 @@ namespace Api.Services.Implementations
 
                 if (detalleVenta != null)
                 {
+                    totalExentas += detalleVenta.Exentas;
+                    totalCinco += detalleVenta.Cinco;
+                    totalDiez += detalleVenta.Diez;
+
+                    if (detalleVenta.Exentas > 0)
+                    {
+                        costoTotalExentas += detalleVenta.Costo;
+                    }
+                    else if (detalleVenta.Cinco > 0)
+                    {
+                        costoTotalCinco += detalleVenta.Costo;
+                    }
+                    else if (detalleVenta.Diez > 0)
+                    {
+                        costoTotalDiez += detalleVenta.Costo;
+                    }
+
+
                     detalleVenta.Venta = ventaCreada.Codigo;
                     var detalleVentaCreado = await _detalleVentaRepository.CrearDetalleVenta(detalleVenta);
                     var idDetalleVenta = detalleVentaCreado.Codigo;
 
+                    Console.WriteLine("LoteId del detalleDTO: " + detalleDTO.LoteId);
+
                     // Lote
                     if (detalleDTO.LoteId != 0)
                     {
+                        Console.WriteLine("LoteId del detalleDTO no es cero, procesando lote..." + detalleDTO.LoteId + " para DetalleVenta " + idDetalleVenta); ;
                         var detalleVencimiento = detalleDTO.ToDetalleVencimiento((int)idDetalleVenta);
+                        Console.WriteLine("DetalleVencimiento creado: " + (detalleVencimiento != null));
                         if (detalleVencimiento != null)
                         {
-                            await _detalleVentaVencimientoRepository.CrearDetalleVencimiento(detalleVencimiento);
+                            try
+                            {
+                                await _detalleVentaVencimientoRepository.CrearDetalleVencimiento(detalleVencimiento);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"Error al crear vencimiento para DetalleVenta {idDetalleVenta}, Lote {detalleDTO.LoteId}: {ex.Message}");
+                            }
                         }
 
                         var articuloLoteActual = await _articuloLoteRepository.GetById((uint)detalleDTO.LoteId);
@@ -95,9 +143,55 @@ namespace Api.Services.Implementations
                 }
             }
 
-            await _auditoriaService.RegistrarAuditoria(5, 1, (int)ventaCreada.Codigo, "Usuario Web",(int)ventaCreada.Vendedor, "Venta creada desde el sistema web" );
+            var imprimirLegal = !string.IsNullOrWhiteSpace(venta.Factura) ? 1u : 0u;
+            var cotizacionDolar = await _cotizacionRepository.GetCotizacionDolarHoy();
+
+            var asientoContable = new GuardarAsientoContableDTO
+            {
+                Automatico = true,
+                TipoVenta = ventaCreada.Credito,
+                Moneda = ventaCreada.Moneda,
+                Sucursal = ventaCreada.Sucursal,
+                Factura = ventaCreada.Factura,
+                Operador = ventaCreada.Vendedor,
+                Fecha = ventaCreada.Fecha,
+                TotalAPagar = ventaCreada.Total,
+                NumeroAsiento = venta.Codigo,
+                Cotizacion = cotizacionDolar != null ? cotizacionDolar.Monto : 7300,
+                TotalExentas = totalExentas,
+                TotalCinco = totalCinco,
+                TotalDiez = totalDiez,
+                ImprimirLegal = imprimirLegal,
+                CajaDefinicion = venta.CajaDefinicion,
+                Referencia = ventaCreada.Codigo
+            };
+
+            var asientoContableCosto = new GuardarCostoAsientoContableDTO
+            {
+                Automatico = true,
+                Moneda = ventaCreada.Moneda,
+                Sucursal = ventaCreada.Sucursal,
+                Factura = ventaCreada.Factura,
+                Operador = ventaCreada.Vendedor,
+                Fecha = ventaCreada.Fecha,
+                CostoTotalCinco = costoTotalCinco,
+                CostoTotalDiez = costoTotalDiez,
+                CostoTotalExentas = costoTotalExentas,
+                Cotizacion = cotizacionDolar != null ? cotizacionDolar.Monto : 7300,
+                MonedaDolar = ventaCreada.Moneda,
+                ImprimirLegal = imprimirLegal,
+                Referencia = ventaCreada.Codigo
+            };
+
+            await _contabilidadService.GuardarAsientoContable(asientoContable);
+            await _contabilidadService.GuardarCostoAsientoContable(asientoContableCosto);
+
+            await _auditoriaService.RegistrarAuditoria(5, 1, (int)ventaCreada.Codigo, "Usuario Web", (int)ventaCreada.Vendedor, "Venta creada desde el sistema web");
             return ventaCreada;
         }
+
+
+        
 
     }
 }

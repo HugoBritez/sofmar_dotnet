@@ -64,7 +64,7 @@ namespace Api.Services.Implementations
                 return new ResponseViewModel<Presupuesto>
                 {
                     Success = true,
-                    Message = "Presupuessto creado con exito",
+                    Message = "Presupuesto creado con exito",
                     Data = presupuestoNuevoCreado
 
                 };

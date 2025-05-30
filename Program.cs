@@ -98,6 +98,17 @@ builder.Services.AddScoped<ITransferenciasRepository, TransferenciasRepository>(
 builder.Services.AddScoped<ITransferenciasItemsRepository, TransferenciasItemsRepository>();
 builder.Services.AddScoped<ITransferenciasItemsVencimientoRepository, TransferenciaItemsVencimientoRepository>();
 builder.Services.AddScoped<IControlIngresoService, ControlIngresoService>();
+builder.Services.AddScoped<IAgendasRepository, AgendasRepository>();
+builder.Services.AddScoped<IAgendasNotasRepository, AgendasNotasRepository>();
+builder.Services.AddScoped<IAgendaSubvisitaRepository, AgendaSubvisitaRepository>();
+builder.Services.AddScoped<ILocalizacionesRepository, LocalizacionesRepository>();
+builder.Services.AddScoped<IAgendasService, AgendaService>();
+builder.Services.AddScoped<IContabilidadService, ContabilidadService>();
+builder.Services.AddScoped<IContabilidadRepository, ContabilidadRepository>();
+builder.Services.AddScoped<ICotizacionRepository, CotizacionRepository>();
+builder.Services.AddScoped<ICajaRepository, CajaRepository>();
+builder.Services.AddScoped<IMetodoPagoRepository, MetodoPagoRepository>();
+builder.Services.AddScoped<IFinancieroRepository, FinancieroRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

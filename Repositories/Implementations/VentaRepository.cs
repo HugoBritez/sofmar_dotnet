@@ -26,6 +26,24 @@ namespace Api.Repositories.Implementations
             return ventaCreada.Entity;
         }
 
+        public async Task<Venta?> GetById(uint? id)
+        {
+            if (id.HasValue)
+            {
+                var venta = await _context.Venta.FirstOrDefaultAsync(ve => ve.Codigo == id);
+                return venta;
+            }
+            else
+            {
+                // Traer la última venta ordenada por código descendente
+                var venta = await _context.Venta
+                    .OrderByDescending(v => v.Codigo)
+                    .Where(ve=> ve.Estado ==1)
+                    .FirstOrDefaultAsync();
+                return venta;
+            }
+        }
+
         public async Task<IEnumerable<VentaViewModel>> ConsultaVentas(
         string? fecha_desde,
         string? fecha_hasta,

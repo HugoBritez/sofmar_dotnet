@@ -64,7 +64,7 @@ namespace Api.Services.Mappers
                 return null;
             }
 
-            if (detalleVenta.DeveBonificacion == 0)
+            if (detalleVenta.DeveBonificacion == 1)
             {
                 return null;
             }
@@ -79,12 +79,16 @@ namespace Api.Services.Mappers
 
         public static DetalleVentaVencimiento? ToDetalleVencimiento(this DetalleVentaDTO detalleVenta, int insertId)
         {
+
+            Console.WriteLine("LoteId del detalleDTO: " + detalleVenta.LoteId);
+            Console.WriteLine("Id del detalleVenta: " + insertId);
+
             if (detalleVenta == null)
             {
                 return null;
             }
 
-            if (detalleVenta.DeveBonificacion == 0)
+            if (detalleVenta.DeveBonificacion == 1)
             {
                 return null;
             }

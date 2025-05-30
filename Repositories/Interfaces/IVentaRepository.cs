@@ -27,5 +27,8 @@ namespace Api.Repositories.Interfaces
         );
 
         Task<IEnumerable<DetalleVentaViewModel>> ConsultaDetalles(uint ventaId);
+
+        Task<Venta?> GetById(uint? id);
+
     }
 }

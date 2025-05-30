@@ -32,7 +32,7 @@ namespace Api.Middlewares
             var wrapped = JsonSerializer.Serialize(new
             {
                 success = context.Response.StatusCode >= 200 && context.Response.StatusCode < 300,
-                data = JsonSerializer.Deserialize<object>(body),
+                body = JsonSerializer.Deserialize<object>(body),
                 statusCode = context.Response.StatusCode
             });
 

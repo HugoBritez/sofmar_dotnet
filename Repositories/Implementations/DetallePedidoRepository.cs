@@ -9,29 +9,35 @@ using Org.BouncyCastle.Asn1.Cms;
 
 namespace Api.Repositories.Implementations
 {
-    public class DetallePedidoRepository : DapperRepositoryBase, IDetallePedidoRepository
+  public class DetallePedidoRepository : DapperRepositoryBase, IDetallePedidoRepository
+  {
+    private readonly ApplicationDbContext _context;
+
+    public DetallePedidoRepository(IConfiguration configuration, ApplicationDbContext context) : base(configuration)
     {
-        private readonly ApplicationDbContext _context;
+      _context = context;
+    }
 
-        public DetallePedidoRepository(IConfiguration configuration, ApplicationDbContext context) : base(configuration)
-        {
-            _context = context;
-        }
+    public async Task<DetallePedido> Crear(DetallePedido detalle)
+    {
+      var detallePedidoCreado = await _context.DetallePedido.AddAsync(detalle);
+      await _context.SaveChangesAsync();
 
-        public async Task<DetallePedido> Crear(DetallePedido detalle)
-        {
-            var detallePedidoCreado = await _context.DetallePedido.AddAsync(detalle);
-            await _context.SaveChangesAsync();
+      return detallePedidoCreado.Entity;
+    }
 
-            return detallePedidoCreado.Entity;
-        }
+    public async Task<IEnumerable<DetallePedido>> GetByPedido(uint id)
+    {
+      var detalles = await _context.DetallePedido.Where(det => det.Pedido == id).ToListAsync();
+      return detalles;
+    }
 
-        public async Task<IEnumerable<PedidoDetalleViewModel>> GetDetallesPedido(Pedido pedido)
-        {
-            var connection = GetConnection();
-            var parameters = new DynamicParameters();
+    public async Task<IEnumerable<PedidoDetalleViewModel>> GetDetallesPedido(Pedido pedido)
+    {
+      var connection = GetConnection();
+      var parameters = new DynamicParameters();
 
-            var query = @$"
+      var query = @$"
               SELECT
                   dp.dp_articulo AS codigo,
                   IF(dp.dp_descripcion_art = '', ar.ar_descripcion, dp.dp_descripcion_art) AS descripcion_articulo,
@@ -172,12 +178,13 @@ namespace Api.Repositories.Implementations
                 AND dp.dp_cantidad > 0;
             ";
 
-            parameters.Add("@Codigo", pedido.Codigo);
-            parameters.Add("@Moneda", pedido.Moneda);
-            parameters.Add("@Fecha", pedido.Fecha.ToDateTime(TimeOnly.MinValue).Date);
-            parameters.Add("@Deposito", pedido.Deposito);
-            return await connection.QueryAsync<PedidoDetalleViewModel>(query, parameters);
-
-        }
+      parameters.Add("@Codigo", pedido.Codigo);
+      parameters.Add("@Moneda", pedido.Moneda);
+      parameters.Add("@Fecha", pedido.Fecha);
+      parameters.Add("@Deposito", pedido.Deposito);
+      return await connection.QueryAsync<PedidoDetalleViewModel>(query, parameters);
     }
+
+
+  }
 }

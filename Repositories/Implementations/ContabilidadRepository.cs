@@ -27,7 +27,7 @@ namespace Api.Repositories.Implementations
               SELECT
                 cp.plan
               FROM
-                cajadef_plancunetas cp
+                cajadef_plancuentas cp
                 INNER JOIN cajadef cf ON cp.cajad = cf.cd_codigo
               WHERE
                 cp.cajad = @codigoDefCaja
@@ -107,24 +107,41 @@ namespace Api.Repositories.Implementations
             }
         }
 
+        // public async Task<ConfiguracionAsiento> GetConfiguracionAsiento(uint NroTabla)
+        // {
+        //     var connection = GetConnection();
+
+        //     var query = @"
+        //       SELECT
+        //         *
+        //       FROM config_asiento
+        //       WHERE con_nroTabla = @NroTabla
+        //       AND con_estado =1
+        //     ";
+
+        //     var parametros = new DynamicParameters();
+        //     parametros.Add("NroTabla", NroTabla);
+        //     Console.WriteLine($"NroTabla en el repository: {NroTabla}");
+        //     Console.WriteLine($"Query en el repository: {query}");
+        //     var result = await connection.QueryFirstOrDefaultAsync<ConfiguracionAsiento>(query, parametros);
+        //     if (result != null)
+        //     {
+        //         Console.WriteLine($"Configuración de asiento encontrada: {result.Exenta}");
+        //         return result;
+        //     }
+        //     else
+        //     {
+        //         Console.WriteLine("No se encontró la configuración de asiento.");
+        //         return new ConfiguracionAsiento();
+        //     }
+        // }
+
         public async Task<ConfiguracionAsiento> GetConfiguracionAsiento(uint NroTabla)
         {
-            var connection = GetConnection();
-
-            var query = @"
-              SELECT
-                *
-              FROM config_asiento
-              WHERE con_nroTabla = @NroTabla
-              AND con_estado =1
-            ";
-
-            var parametros = new DynamicParameters();
-            parametros.Add("NroTabla", NroTabla);
-            var result = await connection.QueryFirstOrDefaultAsync<ConfiguracionAsiento>(query, parametros);
-            if (result != null)
+            var configuracion =await  _context.ConfiguracionAsientos.FirstOrDefaultAsync(c => c.NroTabla == NroTabla && c.Estado == 1);
+            if (configuracion != null)
             {
-                return result;
+                return configuracion;
             }
             else
             {
@@ -136,6 +153,7 @@ namespace Api.Repositories.Implementations
         {
             string valorString = valor.ToString();
             string valorSinComas = valorString.Replace(",", "");
+            
             return decimal.Parse(valorSinComas);
         }
 
@@ -174,7 +192,7 @@ namespace Api.Repositories.Implementations
                     @TotalHaber,
                     @Cotizacion,
                     @Referencia,
-                    1
+                    @Origen
               );
             ";
 
@@ -190,6 +208,7 @@ namespace Api.Repositories.Implementations
             parametros.Add("TotalHaber", asientoContable.TotalHaber);
             parametros.Add("Cotizacion", asientoContable.Cotizacion);
             parametros.Add("Referencia", asientoContable.Referencia);
+            parametros.Add("Origen", asientoContable.Origen);
             var result = await connection.ExecuteAsync(query, parametros);
 
             if (result > 0)

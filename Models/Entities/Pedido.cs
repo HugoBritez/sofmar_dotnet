@@ -9,7 +9,7 @@ namespace Api.Models.Entities
         [Column("p_codigo")]
         public uint Codigo { get; set; }
         [Column("p_fecha")]
-        public DateOnly Fecha { get; set; }
+        public DateTime Fecha { get; set; }
         [Column("p_nropedido")]
         public string NroPedido { get; set; } = string.Empty;
         [Column("p_cliente")]

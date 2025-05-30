@@ -7,8 +7,8 @@ namespace Api.Models.Dtos
         public uint Operador { get; set; }
         public string Documento { get; set; } = string.Empty;
         public uint Numero { get; set; }
-        public DateOnly Fecha { get; set; }
-        public DateOnly FechaAsiento { get; set; }
+        public DateTime Fecha { get; set; }
+        public DateTime FechaAsiento { get; set; }
         public decimal TotalDebe { get; set; }
         public decimal TotalHaber { get; set; }
         public decimal Cotizacion { get; set; }

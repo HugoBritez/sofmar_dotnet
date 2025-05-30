@@ -2,9 +2,9 @@ using Api.Models.Entities;
 
 namespace Api.Models.Dtos
 {
-    public class CrearVentaDTO
+    public class VentaDTO : Venta
     {
-        public required Venta Venta { get; set; } 
-        public required  IEnumerable<DetalleVentaDTO> DetalleVenta { get; set; }
+        public uint? CajaDefinicion { get; set; }
+        public uint? ConfOperacion { get; set; }
     }
 }

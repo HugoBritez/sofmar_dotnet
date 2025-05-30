@@ -6,5 +6,7 @@ namespace Api.Repositories.Interfaces
     {
         Task<DetallePedido> Crear(DetallePedido detalle);
         Task<IEnumerable<PedidoDetalleViewModel>> GetDetallesPedido(Pedido pedido);
+
+        Task<IEnumerable<DetallePedido>> GetByPedido(uint id);
     }
 }
