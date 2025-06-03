@@ -57,6 +57,12 @@ namespace Api.Data
         public DbSet<ConfiguracionAsiento> ConfiguracionAsientos { get; set; }
         public DbSet<Cotizacion> Cotizaciones { get; set; }
         public DbSet<MetodoPago> MetodosPago { get; set; }
+        public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<Operador> Operadores { get; set; }
+        public DbSet<Area> Areas { get; set; }
+        public DbSet<Ciudad> Ciudades { get; set; }
+        public DbSet<Departamento> Departamentos { get; set; }
+        public DbSet<TipoDocumento> TipoDocumentos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

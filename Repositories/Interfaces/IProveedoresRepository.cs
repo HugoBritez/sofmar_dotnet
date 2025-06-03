@@ -6,5 +6,7 @@ namespace Api.Repositories.Interfaces{
     {
         Task<IEnumerable<ProveedorViewModel>> GetProveedores(string? busqueda);
         Task<Proveedor?> GetById(uint id);
+
+        Task<Proveedor> CrearProveedor(Proveedor data);
     }
 }

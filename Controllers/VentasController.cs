@@ -72,5 +72,12 @@ namespace Api.Controllers
             var ventaCreada = await _ventaService.CrearVenta(crearVentaDTO.Venta, crearVentaDTO.DetalleVenta);
             return CreatedAtAction(nameof(CrearVenta), new { id = ventaCreada.Codigo }, ventaCreada);
         }
+
+        [HttpGet("imprimir")]
+        public async Task<ActionResult<IEnumerable<Impresionventa>>> GetImpresion([FromQuery] uint venta)
+        {
+            var ventaAImprimir = await _ventaRepository.GetImpresion(venta);
+            return Ok(ventaAImprimir);
+        }
     }
 }

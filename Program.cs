@@ -12,11 +12,20 @@ using Api.Middlewares;
 using Api.Audit.Services;
 using Api.Services.Interfaces;
 using Api.Services.Implementations;
+using Dapper;
+using Api.Models.ViewModels;
 using Api.Models.Entities;
+
+
 // Cargar el archivo .env al inicio del programa
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+SqlMapper.AddTypeHandler(new JsonTypeHandler<List<VentaDetalle>>());
+SqlMapper.AddTypeHandler(new JsonTypeHandler<List<SucursalData>>());
+SqlMapper.AddTypeHandler(new JsonTypeHandler<List<ConfiguracionFacturaElectronica>>());
 
 // Configurar la cadena de conexión usando las variables de entorno
 builder.Configuration["ConnectionStrings:DefaultConnection"] = 
@@ -109,6 +118,12 @@ builder.Services.AddScoped<ICotizacionRepository, CotizacionRepository>();
 builder.Services.AddScoped<ICajaRepository, CajaRepository>();
 builder.Services.AddScoped<IMetodoPagoRepository, MetodoPagoRepository>();
 builder.Services.AddScoped<IFinancieroRepository, FinancieroRepository>();
+builder.Services.AddScoped<IPersonalService, PersonalService>();
+builder.Services.AddScoped<IAreaRepository, AreaRepository>();
+builder.Services.AddScoped<IZonaRepository, ZonaRepository>();
+builder.Services.AddScoped<ICiudadesRepository, CiudadesRepository>();
+builder.Services.AddScoped<IDepartamentoRepository, DepartamentoRepository>(); 
+builder.Services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>(); 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

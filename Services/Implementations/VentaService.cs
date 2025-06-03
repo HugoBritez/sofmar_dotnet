@@ -6,8 +6,6 @@ using Api.Services.Interfaces;
 using Api.Services.Mappers;
 using Api.Audit.Services;
 using Api.Audit.Models;
-
-
 namespace Api.Services.Implementations
 {
     public class VentaService : IVentaService

@@ -1,5 +1,6 @@
 using Api.Data;
 using Api.Models.Dtos;
+using Api.Models.Entities;
 using Api.Models.ViewModels;
 using Api.Repositories.Base;
 using Api.Repositories.Interfaces;
@@ -16,7 +17,15 @@ namespace Api.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<ClienteViewModel>> GetClientes(string? busqueda, uint? id, uint? interno, uint? vendedor, int? estado=1)
+
+        public async Task<Cliente> CrearCliente(Cliente cliente)
+        {
+            var clienteCreado =await  _context.Clientes.AddAsync(cliente);
+            await _context.SaveChangesAsync();
+            return clienteCreado.Entity;
+        }
+
+        public async Task<IEnumerable<ClienteViewModel>> GetClientes(string? busqueda, uint? id, uint? interno, uint? vendedor, int? estado = 1)
         {
             var where = " WHERE cli_estado = 1";
             var connection = GetConnection();
@@ -24,7 +33,7 @@ namespace Api.Repositories.Implementations
 
             if (estado.HasValue)
             {
-                where =  " WHERE 1=1";
+                where = " WHERE 1=1";
             }
             if (id.HasValue)
             {
@@ -89,7 +98,7 @@ namespace Api.Repositories.Implementations
                 INNER JOIN ciudades ciu ON cli_ciudad = ciu.ciu_codigo
                 INNER JOIN distritos d ON ciu.ciu_distrito = d.d_codigo
                 INNER JOIN departamentos dep ON cli_departamento = dep.dep_codigo
-                LEFT JOIN zonas zo ON zo.zo_codigo = cli_zona " + where + " LIMIT 50"; 
+                LEFT JOIN zonas zo ON zo.zo_codigo = cli_zona " + where + " LIMIT 50";
 
             Console.WriteLine(query);
             return await connection.QueryAsync<ClienteViewModel>(query, parameters);

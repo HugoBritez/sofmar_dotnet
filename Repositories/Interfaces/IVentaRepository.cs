@@ -8,7 +8,6 @@ namespace Api.Repositories.Interfaces
     public interface IVentaRepository
     {
         Task<Venta> CrearVenta(Venta venta);
-
         Task<IEnumerable<VentaViewModel>> ConsultaVentas(
             string? fecha_desde,
             string? fecha_hasta,
@@ -27,8 +26,8 @@ namespace Api.Repositories.Interfaces
         );
 
         Task<IEnumerable<DetalleVentaViewModel>> ConsultaDetalles(uint ventaId);
-
         Task<Venta?> GetById(uint? id);
 
+        Task<IEnumerable<Impresionventa>> GetImpresion(uint venta); 
     }
 }

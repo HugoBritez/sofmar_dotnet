@@ -10,7 +10,6 @@ namespace Api.Repositories.Implementations
     public class ProveedoresRepository : IProveedoresRepository
     {
         private readonly ApplicationDbContext _context;
-
         public ProveedoresRepository(ApplicationDbContext context)
         {
             _context = context;
@@ -39,6 +38,20 @@ namespace Api.Repositories.Implementations
         {
             var proveedor = await _context.Proveedores.FirstOrDefaultAsync(ca => ca.Codigo == id);
             return proveedor;
+        }
+
+        public async Task<Proveedor> CrearProveedor(Proveedor proveedor)
+        {
+            // Clear the navigation property to prevent EF from trying to create a new Zona
+            proveedor.Zona = null;
+            var proveedorCreado = await _context.Proveedores.AddAsync(proveedor);
+            await _context.SaveChangesAsync();
+
+            // Reload the proveedor with its zona information
+            return await _context.Proveedores
+                .Include(p => p.Zona)
+                .FirstOrDefaultAsync(p => p.Codigo == proveedorCreado.Entity.Codigo)
+                ?? throw new InvalidOperationException("Failed to create proveedor");
         }
     }
 }

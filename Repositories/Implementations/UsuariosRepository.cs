@@ -1,5 +1,6 @@
 using Api.Data;
 using Api.Models.Dtos;
+using Api.Models.Entities;
 using Api.Repositories.Base;
 using Api.Repositories.Interfaces;
 using Dapper;
@@ -15,6 +16,13 @@ namespace Api.Repositories.Implementations
             _context = context;
         }
 
+
+        public async Task<Operador> CrearOperador(Operador operador)
+        {
+            var operadorCreado = await _context.Operadores.AddAsync(operador);
+            await _context.SaveChangesAsync();
+            return operadorCreado.Entity;
+        }
         public async Task<IEnumerable<UsuarioViewModel>> GetUsuarios(string? busqueda, uint? id)
         {
             var where = "WHERE op.op_estado = 1";

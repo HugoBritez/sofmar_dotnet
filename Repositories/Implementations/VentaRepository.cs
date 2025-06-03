@@ -5,8 +5,6 @@ using Api.Data;
 using Api.Models.ViewModels;
 using Api.Repositories.Base;
 using Dapper;
-using Microsoft.AspNetCore.WebUtilities;
-
 namespace Api.Repositories.Implementations
 {
     public class VentaRepository : DapperRepositoryBase, IVentaRepository
@@ -16,7 +14,6 @@ namespace Api.Repositories.Implementations
         public VentaRepository(IConfiguration configuration, ApplicationDbContext context) : base(configuration)
         {
             _context = context;
-
         }
 
         public async Task<Venta> CrearVenta(Venta venta)
@@ -38,11 +35,13 @@ namespace Api.Repositories.Implementations
                 // Traer la última venta ordenada por código descendente
                 var venta = await _context.Venta
                     .OrderByDescending(v => v.Codigo)
-                    .Where(ve=> ve.Estado ==1)
+                    .Where(ve => ve.Estado == 1)
                     .FirstOrDefaultAsync();
                 return venta;
             }
         }
+
+
 
         public async Task<IEnumerable<VentaViewModel>> ConsultaVentas(
         string? fecha_desde,
@@ -275,6 +274,115 @@ namespace Api.Repositories.Implementations
             return await connection.QueryAsync<DetalleVentaViewModel>(query, parameters);
         }
 
+        public async Task<IEnumerable<Impresionventa>> GetImpresion(uint venta)
+        {
+            var connection = GetConnection();
+            var parameters = new DynamicParameters();
+            var query =
+            @$"
+              SELECT
+                  ve.ve_codigo as codigo,
+                  case when ve.ve_credito = 1 then 'CREDITO' else 'CONTADO' end as TipoVenta,
+                  date_format(ve.ve_fecha, '%d/%m/%Y') as FechaVenta,
+                  date_format(ve.ve_hora, '%H:%i:%s') as HoraVenta,
+                  date_format(ve.ve_vencimiento, '%d/%m/%Y') as FechaVencimiento,
+                  op.op_nombre as Cajero,
+                  op2.op_nombre as Vendedor,
+                  cli.cli_razon as Cliente,
+                  cli.cli_dir as Direccion,
+                  cli.cli_tel as Telefono,
+                  cli.cli_ruc as Ruc,
+                  cli.cli_mail as ClienteCorreo,
+                  ve.ve_total as Subtotal,
+                  mo.mo_descripcion as Moneda,
+                  dep.dep_descripcion as Deposito,
+                  ve.ve_descuento as TotalDescuento,
+                  (ve.ve_total - ve.ve_descuento) as TotalAPagar,
+                  SUM(deve.deve_exentas) as TotalExentas,
+                  SUM(deve.deve_cinco) as TotalCinco,
+                  SUM(deve.deve_diez) as TotalDiez,
+                  ve.ve_timbrado as Timbrado,
+                  ve.ve_factura as Factura,
+                  ve.ve_obs as Observacion,
+                  ve.ve_cdc,
+                  ve.ve_qr,
+                  (SELECT EXISTS(SELECT 1 FROM config_recibo_electronica WHERE c_sucursal = ve.ve_sucursal AND c_estado = 1)) as UsaFe,
+                  IFNULL((SELECT co_monto FROM cotizaciones WHERE co_fecha = ve.ve_fecha AND co_moneda = 2 ORDER BY co_codigo DESC LIMIT 1),
+                  (SELECT co_monto FROM cotizaciones WHERE  co_moneda = 2 ORDER BY co_codigo DESC LIMIT 1)
+                  ) as Cotizacion,
+                  date_format(
+                    (
+                      SELECT d_fecha_in FROM definicion_ventas WHERE d_nrotimbrado = ve.ve_timbrado
+                      AND d_comprobante = 1 AND d_activo = 1 AND d_sucursal = ve.ve_sucursal order by d_codigo asc LIMIT 1
+                    ),
+                    '%d/%m/%Y'
+                  ) as FacturaValidoDesde,
+                  date_format(
+                    (
+                      SELECT d_fecha_vence FROM definicion_ventas WHERE d_nrotimbrado = ve.ve_timbrado
+                      AND d_comprobante = 1 AND d_activo = 1 AND d_sucursal = ve.ve_sucursal order by d_codigo asc LIMIT 1
+                    ),
+                    '%d/%m/%Y'
+                  ) as FacturaValidoHasta,
+                  JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                      'Codigo', deve.deve_articulo,
+                      'Descripcion', IFNULL(dae.a_descripcion, ar.ar_descripcion),
+                      'Cantidad', deve.deve_cantidad,
+                      'Precio', deve.deve_precio,
+                      'Descuento', deve.deve_descuento,
+                      'Total', deve.deve_cantidad * deve.deve_precio,
+                      'Exentas', deve.deve_exentas,
+                      'Cinco', deve.deve_cinco,
+                      'Diez', deve.deve_diez,
+                      'Lote', dvv.lote,
+                      'FechaVencimiento', al.al_vencimiento,
+                      'ControlVencimiento', ar.ar_vencimiento
+                    )
+                  ) as detalles,
+                  JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                      'SucursalNombre', suc.descripcion,
+                      'SucursalDireccion', suc.direccion,
+                      'SucursalTelefono', suc.tel,
+                      'SucursalEmpresa', suc.titular,
+                      'SucursalRuc', suc.ruc_emp,
+                      'SucursalMatriz', CASE WHEN suc.matriz = 1 THEN 'Matriz' ELSE 'Nombre' END,
+                      'SucursalCiudad', ciu.ciu_descripcion
+                    )
+                  ) as SucursalData,
+                  JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                      'Nombre', cf.c_desc_nombre,
+                      'Fantasia', cf.c_desc_fantasia,
+                      'Direccion', cf.c_direccion,
+                      'Telefono', cf.c_telefono,
+                      'Ruc', cf.c_ruc,
+                      'Correo', cf.c_correo,
+                      'DescripcionEstablecimiento', cf.c_descr_establecimiento,
+                      'DatoEstablecimiento', cf.c_dato2_establecimiento
+                    )
+                  ) as ConfiguracionFacturaElectronica
+                FROM ventas ve
+                INNER JOIN detalle_ventas deve ON ve.ve_codigo = deve.deve_venta
+                INNER JOIN articulos ar ON deve.deve_articulo = ar.ar_codigo
+                LEFT JOIN detalle_articulos_editado dae ON deve.deve_codigo = dae.a_detalle_venta
+                LEFT JOIN detalle_ventas_vencimiento dvv ON deve.deve_codigo = dvv.id_detalle_venta
+                LEFT JOIN articulos_lotes al ON dvv.loteid = al.al_codigo
+                LEFT JOIN operadores op ON ve.ve_operador = op.op_codigo
+                LEFT JOIN operadores op2 ON ve.ve_vendedor = op2.op_codigo
+                LEFT JOIN clientes cli ON ve.ve_cliente = cli.cli_codigo
+                LEFT JOIN sucursales suc ON ve.ve_sucursal = suc.id
+                LEFT JOIN sucursal_ciudad sc ON suc.id = sc.sucursal
+                LEFT  JOIN ciudades ciu ON sc.ciudad = ciu.ciu_codigo
+                INNER JOIN monedas mo ON ve.ve_moneda = mo.mo_codigo
+                INNER JOIN depositos dep ON ve.ve_deposito = dep.dep_codigo
+                LEFT JOIN config_factura_electronica cf ON ve.ve_sucursal = cf.c_sucursal
+                WHERE ve.ve_codigo = @Venta
+            ";
+            parameters.Add("Venta", venta);
 
+            return await connection.QueryAsync<Impresionventa>(query, parameters);
+        }
     }
 }

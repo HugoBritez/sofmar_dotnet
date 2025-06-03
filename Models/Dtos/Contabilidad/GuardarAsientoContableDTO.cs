@@ -17,6 +17,7 @@ namespace Api.Models.Dtos
         public decimal TotalDiez { get; set; }
         public uint ImprimirLegal { get; set; }
         public uint? CajaDefinicion { get; set; }
+        public int? Configuracion { get; set; }
         public uint Referencia { get; set; }
         public uint? Servicio { get; set; }
     }

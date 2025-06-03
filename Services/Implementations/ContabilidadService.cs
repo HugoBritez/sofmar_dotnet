@@ -54,19 +54,17 @@ namespace Api.Services.Implementations
             string conceptoAsiento = string.IsNullOrWhiteSpace(parametros.Factura)
                 ? $"Nota Interna N°:{parametros.Referencia}"
                 : $"{confiAsientoVenta.Concepto.Trim()} - {parametros.Factura}";
-
-
             int planDeCuentas;
 
             if (parametros.TipoVenta == 0) //al contado
             {
-                if (parametros.CajaDefinicion != null)
+                if (parametros.CajaDefinicion != null && parametros.Configuracion != 0) 
                 {
                     planDeCuentas = await _contabilidadRepository.BuscarCodigoPlanCuentaCajaDef((uint)parametros.CajaDefinicion);
                 }
                 else
                 {
-                    planDeCuentas = (int)confiAsientoVenta.Contado;
+                    planDeCuentas = (int)confiAsientoVenta.ContProv;
                 }
             }
             else
