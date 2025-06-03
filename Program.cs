@@ -14,8 +14,7 @@ using Api.Services.Interfaces;
 using Api.Services.Implementations;
 using Dapper;
 using Api.Models.ViewModels;
-using Api.Models.Entities;
-
+using Serilog;
 
 // Cargar el archivo .env al inicio del programa
 Env.Load();
@@ -28,7 +27,7 @@ SqlMapper.AddTypeHandler(new JsonTypeHandler<List<SucursalData>>());
 SqlMapper.AddTypeHandler(new JsonTypeHandler<List<ConfiguracionFacturaElectronica>>());
 
 // Configurar la cadena de conexión usando las variables de entorno
-builder.Configuration["ConnectionStrings:DefaultConnection"] = 
+builder.Configuration["ConnectionStrings:DefaultConnection"] =
     $"Server={Env.GetString("MYSQL_HOST")};Database={Env.GetString("MYSQL_DB")};User={Env.GetString("MYSQL_USER")};Password={Env.GetString("MYSQL_PASSWORD")};";
 
 // Add services to the container.
@@ -122,8 +121,8 @@ builder.Services.AddScoped<IPersonalService, PersonalService>();
 builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IZonaRepository, ZonaRepository>();
 builder.Services.AddScoped<ICiudadesRepository, CiudadesRepository>();
-builder.Services.AddScoped<IDepartamentoRepository, DepartamentoRepository>(); 
-builder.Services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>(); 
+builder.Services.AddScoped<IDepartamentoRepository, DepartamentoRepository>();
+builder.Services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
@@ -153,6 +152,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
+
+
+Log.Logger = new LoggerConfiguration()
+             .Enrich.FromLogContext()
+             .WriteTo.Console()
+             .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+             .WriteTo.Seq("http://localhost:5341")
+             .CreateLogger();
+
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 
