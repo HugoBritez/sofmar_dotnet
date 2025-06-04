@@ -3,6 +3,7 @@ namespace Api.Models.Dtos
 {
     public class CrearPersonaDTO
     {
+        public Persona? persona { get; set; }
         public Operador? Operador { get; set; }
         public Proveedor? Proveedor { get; set; }
         public Cliente? Cliente { get; set; }

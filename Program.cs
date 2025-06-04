@@ -123,6 +123,7 @@ builder.Services.AddScoped<IZonaRepository, ZonaRepository>();
 builder.Services.AddScoped<ICiudadesRepository, CiudadesRepository>();
 builder.Services.AddScoped<IDepartamentoRepository, DepartamentoRepository>();
 builder.Services.AddScoped<ITipoDocumentoRepository, TipoDocumentoRepository>();
+builder.Services.AddScoped<IPersonaRepository, PersonaRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();

@@ -63,6 +63,7 @@ namespace Api.Data
         public DbSet<Ciudad> Ciudades { get; set; }
         public DbSet<Departamento> Departamentos { get; set; }
         public DbSet<TipoDocumento> TipoDocumentos { get; set; }
+        public DbSet<Persona> Personas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
